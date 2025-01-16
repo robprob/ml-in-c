@@ -1,7 +1,6 @@
 # ML in C
 **ML in C** is a collection of machine learning algorithms implemented with the help of a native C library, [MLper](https://github.com/robprob/mlper/tree/main). This project was originally created for educational purposes as I learn C, with the goal of making lightweight, fast, and dependency-free models.
 
----
 ## Quick Start
 1. Clone this repo:
    ```bash
@@ -11,13 +10,21 @@
 2. Review model-specific documentation
 
 ---
-# Models
+# Features
+## Models
 - [Linear Regression](https://github.com/robprob/ml-in-c/tree/main/linear-regression)
-# ML Helper Library
+## ML Helper Library
+- Algorithm-agnostic helper functions
 - [MLper](https://github.com/robprob/ml-in-c/tree/main/mlper)
+## Data Generation
+- Sample CSV data
+- Includes Python scripts to generate custom sample data
+- [Sample Data](https://github.com/robprob/ml-in-c/tree/main/sample-data)
 
 ---
 ## Future Plans
+- Improve MLper global variable usage (I am still new to C and learning how best to structure)
+- Improve sample data generation and allow command-line interaction
 - Logistic Regression
 - GLMs
 - K-Means Clustering
