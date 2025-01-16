@@ -12,7 +12,7 @@
 
 ---
 # Models
-- [Multiple Linear Regression](https://github.com/robprob/ml-in-c/tree/main/linear-regression)
+- [Linear Regression](https://github.com/robprob/ml-in-c/tree/main/linear-regression)
 # ML Helper Library
 - [MLper](https://github.com/robprob/ml-in-c/tree/main/mlper)
 
