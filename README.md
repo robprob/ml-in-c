@@ -17,8 +17,7 @@
 - Algorithm-agnostic helper functions
 - [MLper](https://github.com/robprob/ml-in-c/tree/main/mlper)
 ## Data Generation
-- Sample CSV data
-- Includes Python scripts to generate custom sample data
+- Sample CSV data and Python scripts used to generate
 - [Sample Data](https://github.com/robprob/ml-in-c/tree/main/sample-data)
 
 ---
