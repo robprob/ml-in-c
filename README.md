@@ -1,5 +1,5 @@
 # ML in C
-**ML in C** is a collection of machine learning algorithms implemented with the help of native C library, [MLper](https://github.com/robprob/mlper/tree/main). This project was originally created for educational purposes as I learn C, with the goal of making lightweight, fast, and dependency-free models.
+**ML in C** is a collection of machine learning algorithms implemented with the help of a native C library, [MLper](https://github.com/robprob/mlper/tree/main). This project was originally created for educational purposes as I learn C, with the goal of making lightweight, fast, and dependency-free models.
 
 ---
 ## Quick Start
