@@ -1,4 +1,5 @@
 #%%
+"""Simple example implementation of single-variable linear regression"""
 
 import pandas as pd
 import numpy as np
