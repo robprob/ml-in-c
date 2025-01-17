@@ -13,9 +13,23 @@ Implementation of Linear Regression using gradient descent, with support for fin
 - Regularization: L2 (Ridge), L1 (Lasso), and Elastic Net
 
 ### Performance Metrics
+- Regularly reports MSE during training and then final MSE on test set
 - Measures CPU clock time during model training
 
 ---
+
+## Installation
+1. Clone main repository:
+   ```bash
+   git clone https://github.com/robprob/ml-in-c.git
+   cd ml-in-c/linear-regression
+   ```
+2. Build executable:
+   ```bash
+   make
+   ```
+3. Run as described in the following **Usage Examples**
+
 ## Usage Examples
 ### Default Parameters
 Run the program with default test settings, or 100 epochs and a learning rate of 0.05:
@@ -65,3 +79,5 @@ Epoch 100: Train MSE: 8.499679
 Test MSE: 8.851673
 Training Time : 0.001422 seconds
 ```
+
+
