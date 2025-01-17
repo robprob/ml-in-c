@@ -21,9 +21,13 @@
 - [Sample Data](https://github.com/robprob/ml-in-c/tree/main/sample-data)
 
 ---
-## Future Plans
-- Improve MLper global variable usage (I am still new to C and learning how best to structure)
+## TODO
+- Encapsulate melper dataset global variables in a dataset struct
+- Support SGD and mini-batch GD to offer additional options in mitigating the disadvantages compared to Normal equation/SVD with respect to training-instance complexity
+- Utilize config file to manage increasing scope of model parameters
 - Improve sample data generation and allow command-line interaction
+
+## Future Models
 - Logistic Regression
 - GLMs
 - K-Means Clustering
