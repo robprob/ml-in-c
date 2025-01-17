@@ -1,5 +1,5 @@
 # Linear Regression
-Fits a linear equation to provided data set, converging via gradient descent, with support for fine-tuning parameters and implementing regularization.
+Implementation of Linear Regression using gradient descent, with support for fine-tuning and regularization.
 
 ---
 ## Features
