@@ -5,180 +5,191 @@
 
 #include "mlper.h"
 
-// Feature and target variable arrays (feature arrays are multi-dimensional)
-double *X = NULL;
-double *X_train = NULL;
-double *X_test = NULL;
-
-double *y = NULL;
-double *y_train = NULL;
-double *y_test = NULL;
-
-// Predictions array
-double *y_pred = NULL;
-
-// Initialize length of data splits
-int train_length = 0;
-int test_length = 0;
-
-// Initialize counts of features/entries
-int num_features = 0;
-int num_entries = 0;
-
 // Dynamically initialize memory for global arrays to 0
-void initialize_globals(int num_features, int num_entries)
+void initialize_dataset(struct Dataset *data, int num_features, int num_entries)
 {
-    // For multidimensional feature arrays, allocate as a single memory block for efficiency
-    X = calloc(num_entries * num_features, sizeof(double));
-    X_train = calloc(num_entries * num_features, sizeof(double));
-    X_test = calloc(num_entries * num_features, sizeof(double));
+    data->X = calloc(num_entries * num_features, sizeof(double));
+    data->y = calloc(num_entries, sizeof(double));
+    data->X_train = calloc(num_entries * num_features, sizeof(double));
+    data->X_test = calloc(num_entries * num_features, sizeof(double));
+    data->y_train = calloc(num_entries, sizeof(double));
+    data->y_test = calloc(num_entries, sizeof(double));
 
-    y = calloc(num_entries, sizeof(double));
-    y_train = calloc(num_entries, sizeof(double));
-    y_test = calloc(num_entries, sizeof(double));
-
-    y_pred = calloc(num_entries, sizeof(double));
-
-    // Ensure memory was able to be allocated
-    if (!X || !y || !X_train || !X_test || !y_train || !y_test)
-    {
-        printf("Unable to allocate memory.\n");
+    if (!data->X || !data->y || !data->X_train || !data->X_test || !data->y_train || !data->y_test) {
+        printf("Unable to allocate memory for dataset.\n");
         exit(EXIT_FAILURE);
     }
 }
 
 // Free memory allocated for global arrays
-void free_globals()
+void free_dataset(struct Dataset *data)
 {
-    free(X);
-    free(y);
-    free(X_train);
-    free(X_test);
-    free(y_train);
-    free(y_test);
-    free(y_pred);
+    free(data->X);
+    free(data->y);
+    free(data->X_train);
+    free(data->X_test);
+    free(data->y_train);
+    free(data->y_test);
+    free(data->y_pred);
 }
 
 // Load CSV at specified file path into feature and target variable arrays
-void load(char *file_path)
+void load(struct Dataset *data)
 {
-    // Reading buffer
-    char line[MAX_LENGTH];
-    // Tokenized entry segment
-    char *token;
-
-    // First file read, counts features and entries
-    FILE *file = fopen(file_path, "r");
+    // First file read: determine proper header length, count features/entries
+    FILE *file = fopen(data->file_path, "r");
     if (!file)
     {
-        printf("Unable to open file at: %s\n", file_path);
+        printf("Unable to open file at: %s\n", data->file_path);
         exit(EXIT_FAILURE);
     }
 
-    // Read header row into buffer
-    fgets(line, MAX_LENGTH, file);
+    // Start with modestly-large buffer
+    size_t header_size = 1024;
+    char *header = malloc(header_size);
+    if (!header)
+    {
+        printf("Unable to allocate memory for header.\n");
+        fclose(file);
+        exit(EXIT_FAILURE);
+    }
+
+    size_t bytes_read = 0;
+    // Continually read
+    while (fgets(header + bytes_read, header_size - bytes_read, file))
+    {
+        // If header contains line break, full header has been read
+        if (strchr(header + bytes_read, '\n'))
+        {
+            break;
+        }
+        // Double buffer size, reallocating memory
+        // Provides flexibility for high-dimensional datasets
+        header_size *= 2;
+        header = realloc(header, header_size);
+        // Catch invalid or extremely large header size allocations
+        if (!header || header_size > 1000000)
+        {
+            printf("Unable to reallocate memory for larger header.\n");
+            free(header);
+            fclose(file);
+            exit(EXIT_FAILURE);
+        }
+        // Update total bytes read
+        bytes_read = strlen(header);
+    }
 
     // Tokenize header, splitting by commas
-    token = strtok(line, ",");
+    char *token = strtok(header, ",");
 
     // Count number of features
+    int num_features = 0;
     while (token)
     {
         num_features++;
-        // Continue iterating tokens in line
+        // Continue iterating tokens in header
         token = strtok(NULL, ",");
     }
+    free(header);
+    // Exclude target variable from feature count
+    data->num_features = num_features - 1;
 
-    // Ensure feature count excludes target variable
-    num_features--;
-
-    // Iterate remaining lines in file, counting number of data entries
-    while (fgets(line, MAX_LENGTH, file) != NULL)
+    // Given feature count, forgivingly over-estimate maximum byte length of data entries
+    int max_float_length = 20; // over-estimate 20 character float max
+    int max_length = (data->num_features + 1) * (max_float_length + 1); // + 1 accommodates commas, \n, etc.
+    char *line = malloc(max_length);
+    if (!line)
     {
-        num_entries++;
+        printf("Unable to allocate memory for data rows.\n");
+        fclose(file);
+        exit(EXIT_FAILURE);
     }
 
+    // Iterate remaining lines in file, counting number of data entries
+    while (fgets(line, max_length, file) != NULL)
+    {
+        data->num_entries++;
+    }
     fclose(file);
 
-    // Dynamically memory for data arrays
-    initialize_globals(num_features, num_entries);
+    // Dynamically allocate memory for dataset arrays
+    initialize_dataset(data, data->num_features, data->num_entries);
 
-    // Second file read, copies data into allocated memory
-    file = fopen(file_path, "r");
+    // Second file read: copy data into allocated memory
+    file = fopen(data->file_path, "r");
     if (!file)
     {
-        printf("Unable to reopen file at: %s\n", file_path);
+        printf("Unable to reopen file at: %s\n", data->file_path);
         exit(EXIT_FAILURE);
     }
 
     // Skip header
-    fgets(line, MAX_LENGTH, file);
+    fgets(line, max_length, file);
 
+    // Read CSV, file by line
     int index = 0;
-
-    // Read CSV file by line
-    while (fgets(line, MAX_LENGTH, file) != NULL)
+    while (fgets(line, max_length, file) != NULL)
     {
         // Tokenize row, splitting by commas
         token = strtok(line, ",");
-        // Add feature variables
-        for (int i = 0; i < num_features; i++)
+        // Write feature variables to dataset
+        for (int i = 0; i < data->num_features; i++)
         {
-            // Cast to double and assign to matrix
-            X[index * num_features + i] = strtod(token, NULL);
+            // Cast to double and assign to feature matrix
+            data->X[index * data->num_features + i] = strtod(token, NULL);
             token = strtok(NULL, ",");
         }
         // Add target variable
-        y[index] = strtod(token, NULL);
+        data->y[index] = strtod(token, NULL);
 
         index++;
     }
-
+    free(line);
     fclose(file);
 }
 
 // Standardize feature data to mean of 0, standard deviation of 1
-void standardize(double *X, int num_features, int num_entries)
+void standardize(struct Dataset *data)
 {
     // Iterate input features
-    for (int j = 0; j < num_features; j++)
+    for (int j = 0; j < data->num_features; j++)
     {
         // Sum feature data
         double sum = 0.0;
-        for (int i = 0; i < num_entries; i++)
+        for (int i = 0; i < data->num_entries; i++)
         {
-            sum += X[i * num_features + j];
+            sum += data->X[i * data->num_features + j];
         }
         // Calculate mean
-        double mean = sum / num_entries;
+        double mean = sum / data->num_entries;
 
         // Sum differences from mean squared
         double sum_diff_squared = 0.0;
-        for (int i = 0; i < num_entries; i++)
+        for (int i = 0; i < data->num_entries; i++)
         {
-            double diff = X[i * num_features + j] - mean;
+            double diff = data->X[i * data->num_features + j] - mean;
             sum_diff_squared += diff * diff;
         }
         // Calculate standard deviation
-        double std_dev = sqrt(sum_diff_squared / num_entries);
+        double std_dev = sqrt(sum_diff_squared / data->num_entries);
 
         // Perform feature standardization
         // X = (X - mean) / std_dev
-        for (int i = 0; i < num_entries; i++)
+        for (int i = 0; i < data->num_entries; i++)
         {
-            X[i * num_features + j] = (X[i * num_features + j] - mean) / std_dev;
+            data->X[i * data->num_features + j] = (data->X[i * data->num_features + j] - mean) / std_dev;
         }
     }
 }
 
-// Splits data into training/test sets given test proportion
-void train_test_split(double test_proportion)
+// Split data into training/test sets
+void train_test_split(struct Dataset *data, double test_proportion)
 {
     // Optionally seed psuedo rng
     // srand(115);
 
     // Iterate indices of sample data
-    for (int i = 0; i < num_entries; i++)
+    for (int i = 0; i < data->num_entries; i++)
     {
         // Generate random number between 0 and 1
         float number = rand() / ((double) RAND_MAX + 1);
@@ -187,30 +198,30 @@ void train_test_split(double test_proportion)
         if (number <= test_proportion)
         {
             // Copy all feature values
-            for (int j = 0; j < num_features; j++)
+            for (int j = 0; j < data->num_features; j++)
             {
-                X_test[test_length * num_features + j] = X[i * num_features + j];
+                data->X_test[data->test_length * data->num_features + j] = data->X[i * data->num_features + j];
             }
-            y_test[test_length] = y[i];
-            test_length++;
+            data->y_test[data->test_length] = data->y[i];
+            data->test_length++;
         }
         else
         {
             // Copy all feature values
-            for (int j = 0; j < num_features; j++)
+            for (int j = 0; j < data->num_features; j++)
             {
-                X_train[train_length * num_features + j] = X[i * num_features + j];
+                data->X_train[data->train_length * data->num_features + j] = data->X[i * data->num_features + j];
             }
-            y_train[train_length] = y[i];
-            train_length++;
+            data->y_train[data->train_length] = data->y[i];
+            data->train_length++;
         }
     }
 
-    // Dynamically reallocate (resize) memory to true array sizes
-    X_train = realloc(X_train, train_length * num_features * sizeof(double));
-    X_test = realloc(X_test, test_length * num_features * sizeof(double));
-    y_train = realloc(y_train, train_length * sizeof(double));
-    y_test = realloc(y_test, test_length * sizeof(double));
+    // Dynamically reallocate memory to true array sizes
+    data->X_train = realloc(data->X_train, data->train_length * data->num_features * sizeof(double));
+    data->X_test = realloc(data->X_test, data->test_length * data->num_features * sizeof(double));
+    data->y_train = realloc(data->y_train, data->train_length * sizeof(double));
+    data->y_test = realloc(data->y_test, data->test_length * sizeof(double));
 }
 
 // Computes Mean Squared Error (MSE) of predicted values
@@ -232,7 +243,7 @@ double mean_squared_error(double *y_actual, double *y_pred, int num_predictions)
 }
 
 // Export prediction array to CSV
-void export_predictions(char *file_name, double *y_pred, int num_predictions)
+void export_predictions(double *y_pred, int num_predictions, char *file_name)
 {
     // Edit existing CSV file or create new one
     FILE *file = fopen(file_name, "w");
@@ -254,8 +265,13 @@ void export_predictions(char *file_name, double *y_pred, int num_predictions)
 }
 
 // Export complete test data and predicted values to CSV
-void export_results(char *file_name, double *X, double *y_actual, double *y_pred, int num_features, int num_predictions)
+void export_results(struct Dataset *data, int num_predictions, char *file_name)
 {
+    double *X = data->X;
+    double *y_actual = data->y_test;
+    double *y_pred = data->y_pred;
+    int num_features = data->num_features;
+
     // Edit existing CSV file or create new one
     FILE *file = fopen(file_name, "w");
     if (!file)
