@@ -54,7 +54,7 @@ Train a linear regression model with L1 regularization (lasso) using a lambda of
 ### Elastic Net
 Train a linear regression model using a linear combination of L2 and L1 regularization:
 ```base
-./linreg sample-data/data.csv 1000 0.01 --ridge 0.1 --lasso 0.05
+./linreg ../sample-data/linear_multi_var_500.csv 1000 0.01 --ridge 0.1 --lasso 0.05
 ```
 ## Command Log Output
 Below is an example of program output:
