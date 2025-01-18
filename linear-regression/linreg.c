@@ -1,5 +1,5 @@
 /*
-Implementation of multi-variable linear regression, including L2/L1 regularization.
+Implementation of multi-variable linear regression.
 
 Linear Function
 h(x) = wi * xj + b
@@ -20,118 +20,56 @@ E = (1/2) * Σ(i=1)^n (yi - ^yi)^2
 
 #include "mlper.h"
 
-// Linear Regression model with parameters
+// Linear Regression model with default hyperparameters
 struct LinearRegression {
-    double *w; // Weight vector
-    double b; // Bias
+    int num_epochs; // Number of training iterations
+    double learning_rate; // Training "step" size
+    double test_proportion; // Proportion of training data held in test set
+    char gradient_descent[10]; // Variant of GD
+    int batch_size; // Number of entries selected per epoch
     double l2_lambda; // Ridge
     double l1_lambda; // Lasso
+    double *w; // Weight vector
+    double b; // Bias
 };
 
 // Function Prototypes
-void print_usage();
-struct LinearRegression fit_model(struct LinearRegression linreg, int num_epochs, double learning_rate);
-void predict(struct LinearRegression linreg, double *X_predict, int num_predictions);
+void parse_config(struct Dataset *data, struct LinearRegression *linreg);
+void fit_model(struct LinearRegression *linreg, struct Dataset *data);
+void predict(struct LinearRegression *linreg, struct Dataset *data, double *X_predict, int num_predictions);
 
 
 int main(int argc, char **argv)
 {
-    // Instantiate linear regression model, initialized to 0
+    // Instantiate dataset at 0
+    struct Dataset data = {0};
+    // Instantiate Linear Regression model at 0
     struct LinearRegression linreg = {0};
 
-    // Validate command-line arguments
-    char *file_path;
-    int num_epochs;
-    double learning_rate;
-
-    // Parse data file, number of epochs, and learning rate
-    if (argc <= 2)
-    {
-        if (argc == 1)
-        {
-            file_path = "../sample-data/linear_multi_var_500.csv";
-        }
-        else if (strcmp(argv[1], "--help") == 0)
-        {
-            print_usage();
-            return 0;
-        }
-        else
-        {
-            file_path = argv[1];
-        }
-
-        num_epochs = 100;
-        learning_rate = 0.05;
-
-        linreg.l2_lambda = 0.0;
-        linreg.l1_lambda = 0.0;
-    }
-    else if (argc == 4 || argc == 6 || argc == 8)
-    {
-        file_path = argv[1];
-        num_epochs = atoi(argv[2]);
-        learning_rate = atof(argv[3]);
-    }
-    else
-    {
-        print_usage();
-        exit(EXIT_FAILURE);
-    }
-
-    // Parse regularization inputs
-    if (argc == 4)
-    {
-        linreg.l2_lambda = 0.0;
-        linreg.l1_lambda = 0.0;
-    }
-    else if (argc == 6)
-    {
-        if (strcmp(argv[4], "--ridge") == 0)
-        {
-            linreg.l2_lambda = atof(argv[5]);
-        }
-        else if (strcmp(argv[4], "--lasso") == 0)
-        {
-            linreg.l1_lambda = atof(argv[5]);
-        }
-        else
-        {
-            print_usage();
-            exit(EXIT_FAILURE);
-        }
-    }
-    else if (argc == 8)
-    {
-        linreg.l2_lambda = atof(argv[5]);
-        linreg.l1_lambda = atof(argv[7]);
-    }
-
-    // Final validation of numeric inputs
-    if (num_epochs <= 0 || learning_rate <= 0)
-    {
-        printf("num_epochs: %i, and learning_rate: %f must be positive numbers.\n", num_epochs, learning_rate);
-        exit(EXIT_FAILURE);
-    }
+    // Parse data path and model hyperparameter from config file
+    parse_config(&data, &linreg);
 
     // Print selected parameters
-    printf("File Path: %s\n", file_path);
-    printf("Number of Epochs: %i\n", num_epochs);
-    printf("Learning Rate: %g\n", learning_rate);
+    printf("File Path: %s\n", data.file_path);
+    printf("Number of Epochs: %i\n", linreg.num_epochs);
+    printf("Learning Rate: %g\n", linreg.learning_rate);
+    printf("Test Proportion: %g\n", linreg.test_proportion);
+    printf("Batch Size: %i\n", linreg.batch_size);
+    printf("Gradient Descent: %s\n", linreg.gradient_descent);
     printf("L2 Lambda: %g\n", linreg.l2_lambda);
     printf("L1 Lambda: %g\n", linreg.l1_lambda);
 
     // Load feature and target variable data into arrays
-    load(file_path);
+    load(&data);
 
     // Standardize feature data, X, to mean of 0, standard deviation of 1
-    standardize(X, num_features, num_entries);
+    standardize(&data);
 
     // Split data into training and test arrays
-    train_test_split(0.3);
+    train_test_split(&data, linreg.test_proportion);
 
     // Initialize weight vector and bias at 0 (horizontal line)
-    linreg.w = calloc(num_features, sizeof(double));
+    linreg.w = calloc(data.num_features, sizeof(double));
     if (!linreg.w)
     {
         printf("Unable to allocate memory for weights.\n");
@@ -142,16 +80,16 @@ int main(int argc, char **argv)
 
     start = clock();
 
-    // Fit model to training data with specified epochs and training rate
-    linreg = fit_model(linreg, num_epochs, learning_rate);
+    // Fit model to training data
+    fit_model(&linreg, &data);
 
     end = clock();
 
     // Generate predictions using trained model
-    predict(linreg, X_test, test_length);
+    predict(&linreg, &data, data.X_test, data.test_length);
 
     // Calculate Mean Squared Error
-    double mse = mean_squared_error(y_test, y_pred, test_length);
+    double mse = mean_squared_error(data.y_test, data.y_pred, data.test_length);
     printf("\nTest MSE: %f\n", mse);
 
     double cpu_time = ((double) (end - start)) / CLOCKS_PER_SEC;
@@ -159,38 +97,84 @@ int main(int argc, char **argv)
     printf("Training Time : %f seconds\n", cpu_time);
 
     // Export feature data and calculated predictions
-    export_results("test_predictions.csv", X_test, y_test, y_pred, num_features, test_length);
+    export_results(&data, data.test_length, "test_predictions.csv");
 
     // Free memory taken up by dataset
-    free_globals();
+    free_dataset(&data);
     // Free parameter weights array
     free(linreg.w);
 }
 
-// Display command-line usage information
-void print_usage()
+// Parse data file path and model hyperparameter from config file
+void parse_config(struct Dataset *data, struct LinearRegression *linreg)
 {
-    printf("Usage:\n");
-    printf("  ./linreg\n");
-    printf("  ./linreg [data.csv]\n");
-    printf("  ./linreg [data.csv] [num_epochs] [learning_rate] [options]\n");
-    printf("Options:\n");
-    printf("  --ridge [l2_lambda]      Use Ridge regression with L2 regularization\n");
-    printf("  --lasso [l1_lambda]      Use Lasso regression with L1 regularization\n");
-    printf("  --help                   Display this help message\n");
+    FILE *file = fopen("config.txt", "r");
+    if (!file)
+    {
+        printf("Unable to open config file, config.txt\n");
+        exit(EXIT_FAILURE);
+    }
+
+    // Line reading buffer
+    char line[128];
+    int line_num = 1;
+
+    while (fgets(line, sizeof(line), file))
+    {
+        char value[128];
+        sscanf(line, "%*[^=]=%s", value);
+
+        switch (line_num++)
+        {
+            case 1:
+                strcpy(data->file_path, value);
+                break;
+            case 2:
+                linreg->num_epochs = atoi(value);
+                break;
+            case 3:
+                linreg->learning_rate = atof(value);
+                break;
+            case 4:
+                linreg->test_proportion = atof(value);
+                break;
+            case 5:
+                strcpy(linreg->gradient_descent, value);
+                break;
+            case 6:
+                linreg->batch_size = atoi(value);
+                break;
+            case 7:
+                linreg->l2_lambda = atof(value);
+                break;
+            case 8:
+                linreg->l1_lambda = atof(value);
+                break;
+            case 9:
+                printf("Too many configuration keys\n");
+                exit(EXIT_FAILURE);
+        }
+    }
+    fclose(file);
 }
 
 // Fit linear regression model to training data
-struct LinearRegression fit_model(struct LinearRegression linreg, int num_epochs, double learning_rate)
+void fit_model(struct LinearRegression *linreg, struct Dataset *data)
 {
-    // Create new temporary array of weights
+    // Retrieve dataset counts and model parameters
+    int num_features = data->num_features;
+    int train_length = data->train_length;
+
+    int num_epochs = linreg->num_epochs;
+    double learning_rate = linreg->learning_rate;
+    double l2_lambda = linreg->l2_lambda;
+    double l1_lambda = linreg->l1_lambda;
+
     double w[num_features];
-    memcpy(w, linreg.w, num_features * sizeof(double));
+    memcpy(w, linreg->w, num_features * sizeof(double));
+    double b = linreg->b;
 
-    // Bias parameter
-    double b = linreg.b;
-
-    // Gradient accumulation
+    // Gradient accumulation array
     double *w_sums = calloc(num_features, sizeof(double));
     if (!w_sums)
     {
@@ -213,18 +197,18 @@ struct LinearRegression fit_model(struct LinearRegression linreg, int num_epochs
             // Sum weighted feature contributions
             for (int j = 0; j < num_features; j++)
             {
-                y_pred += w[j] * X_train[i * num_features + j];
+                y_pred += w[j] * data->X_train[i * num_features + j];
             }
 
             // Calculate error
-            double error = y_train[i] - y_pred;
+            double error = data->y_train[i] - y_pred;
 
             // Accumulate gradients
             b_sum += error;
             // For each feature
             for (int j= 0; j < num_features;j++)
             {
-                w_sums[j] += X_train[i * num_features + j] * error;
+                w_sums[j] += data->X_train[i * num_features + j] * error;
             }
         }
 
@@ -235,22 +219,22 @@ struct LinearRegression fit_model(struct LinearRegression linreg, int num_epochs
             double dE_dw = (-2.0 / train_length) * w_sums[j];
 
             // Add L2 regularization (ridge)
-            if (linreg.l2_lambda > 0.0)
+            if (l2_lambda > 0.0)
             {
-                dE_dw += 2 * linreg.l2_lambda * w[j];
+                dE_dw += (2.0 / train_length) * l2_lambda * w[j];
             }
 
             // Add L1 regularization (lasso)
-            if (linreg.l1_lambda > 0.0)
+            if (l1_lambda > 0.0)
             {
                 // Derivative of absolute value is dependent on sign of weight
                 if (w[j] > 0)
                 {
-                    dE_dw += linreg.l1_lambda;
+                    dE_dw += l1_lambda;
                 }
                 else if (w[j] < 0)
                 {
-                    dE_dw -= linreg.l1_lambda;
+                    dE_dw -= l1_lambda;
                 }
             }
             // Update feature weight, compensating for learning rate
@@ -263,19 +247,19 @@ struct LinearRegression fit_model(struct LinearRegression linreg, int num_epochs
         b -= learning_rate * dE_db;
 
         // Print training progress intermittently
-        int divisor = (num_epochs / 10 == 0) ? 1 : num_epochs / 10;
+        int divisor = (num_epochs / 10 == 0) ? 1 : num_epochs / 10; // Prevent dividing by 0 with small epoch number
         if (epoch % divisor == 0)
         {
             // Copy weights and bias back to model
             for (int j = 0; j < num_features; j++)
             {
-                linreg.w[j] = w[j];
+                linreg->w[j] = w[j];
             }
-            linreg.b = b;
+            linreg->b = b;
 
             // Make predictions and calculate MSE
-            predict(linreg, X_train, train_length);
-            double MSE = mean_squared_error(y_train, y_pred, train_length);
+            predict(linreg, data, data->X_train, data->train_length);
+            double MSE = mean_squared_error(data->y_train, data->y_pred, data->train_length);
             printf("Epoch %d: Train MSE: %f\n", epoch, MSE);
         }
     }
@@ -283,28 +267,28 @@ struct LinearRegression fit_model(struct LinearRegression linreg, int num_epochs
     // Final weights and bias update
     for (int j = 0; j < num_features; j++)
     {
-        linreg.w[j] = w[j];
+        linreg->w[j] = w[j];
     }
-    linreg.b = b;
+    linreg->b = b;
 
     // Free gradient accumulator array
     free(w_sums);
-    return linreg;
 }
 
 // Make predictions using trained linear regression model
-void predict(struct LinearRegression linreg, double *X_predict, int num_predictions)
+void predict(struct LinearRegression *linreg, struct Dataset *data, double *X_predict, int num_predictions)
 {
-    // Reallocate global y_pred array for size of predictions
-    y_pred = realloc(y_pred, num_predictions * sizeof(double));
-    if (!y_pred)
+    int num_features = data->num_features;
+
+    // Reallocate y_pred array for size of predictions
+    data->y_pred = realloc(data->y_pred, num_predictions * sizeof(double));
+    if (!data->y_pred)
     {
         printf("Unable to reallocate y_pred.\n");
         exit(EXIT_FAILURE);
     }
 
-    // Retrieve model parameters
-    double b = linreg.b;
+    double b = linreg->b;
 
     // Calculate and store predictions
     for (int i = 0; i < num_predictions; i++)
@@ -313,8 +297,8 @@ void predict(struct LinearRegression linreg, double *X_predict, int num_predicti
         // Sum weighted feature contributions
         for (int j = 0; j < num_features; j++)
         {
-            temp_prediction += linreg.w[j] * X_predict[i * num_features + j];
+            temp_prediction += linreg->w[j] * X_predict[i * num_features + j];
         }
-        y_pred[i] = temp_prediction;
+        data->y_pred[i] = temp_prediction;
     }
 }
