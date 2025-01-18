@@ -17,14 +17,12 @@
 - Algorithm-agnostic helper functions
 - [MLper](https://github.com/robprob/ml-in-c/tree/main/mlper)
 ## Data Generation
-- Sample CSV data and Python scripts used to generate them
+- Sample CSV data and the Python scripts used to generate them
 - [Sample Data](https://github.com/robprob/ml-in-c/tree/main/sample-data)
 
 ---
 ## TODO
-- Encapsulate melper dataset global variables in a dataset struct
 - Support SGD and mini-batch GD to offer additional options in mitigating the disadvantages compared to Normal equation/SVD with respect to training-instance complexity
-- Utilize config file to manage increasing scope of model parameters
 - Improve sample data generation and allow command-line interaction
 
 ## Future Models
