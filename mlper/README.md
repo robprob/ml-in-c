@@ -42,6 +42,13 @@ The library supports both **static** and **shared** compilation, with both optio
   void standardize(struct Dataset *data);
   ```
 
+### **unstandardize**
+- **Description**: Un-standardize feature data back to original values.
+- **Prototype**:
+  ```c
+  void unstandardize(struct Dataset *data);
+  ```
+
 ### **train_test_split**
 - **Description**: Splits data into training and test sets based on a given test proportion.
 - **Prototype**:
