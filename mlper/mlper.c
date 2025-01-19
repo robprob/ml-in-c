@@ -224,7 +224,7 @@ void train_test_split(struct Dataset *data, double test_proportion)
     data->y_test = realloc(data->y_test, data->test_length * sizeof(double));
 }
 
-// Computes Mean Squared Error (MSE) of predicted values
+// Computes Mean Squared Error (MSE) between predicted and actual values.
 double mean_squared_error(double *y_actual, double *y_pred, int num_predictions)
 {
     // Sum of absolute error squared
@@ -242,7 +242,7 @@ double mean_squared_error(double *y_actual, double *y_pred, int num_predictions)
     return (sum_error / num_predictions);
 }
 
-// Export prediction array to CSV
+// Exports predictions to a CSV file
 void export_predictions(double *y_pred, int num_predictions, char *file_name)
 {
     // Edit existing CSV file or create new one
@@ -264,7 +264,7 @@ void export_predictions(double *y_pred, int num_predictions, char *file_name)
     fclose(file);
 }
 
-// Export complete test data and predicted values to CSV
+// Exports full data, actual values, and predictions to a CSV file
 void export_results(struct Dataset *data, int num_predictions, char *file_name)
 {
     double *X = data->X;
