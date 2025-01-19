@@ -22,8 +22,6 @@
 
 ---
 ## TODO
-- Offer standardization as an optional config feature
-- Un-standardize feature matrix before exporting results
 - Support SGD and mini-batch GD to offer additional options in mitigating the disadvantages compared to Normal equation/SVD with respect to training-instance complexity
 - Improve sample data generation and allow command-line interaction
 
