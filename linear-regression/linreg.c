@@ -51,6 +51,7 @@ int main(int argc, char **argv)
 
     // Print selected parameters
     printf("File Path: %s\n", data.file_path);
+    printf("Standardized: %i\n", data.standardized);
     printf("Number of Epochs: %i\n", linreg.num_epochs);
     printf("Learning Rate: %g\n", linreg.learning_rate);
     printf("Test Proportion: %g\n", linreg.test_proportion);
@@ -62,8 +63,11 @@ int main(int argc, char **argv)
     // Load feature and target variable data into arrays
     load(&data);
 
-    // Standardize feature data, X, to mean of 0, standard deviation of 1
-    standardize(&data);
+    // If specified, standardize feature data, X, to mean of 0, standard deviation of 1
+    if (data.standardized)
+    {
+        standardize(&data);
+    }
 
     // Split data into training and test arrays
     train_test_split(&data, linreg.test_proportion);
@@ -95,6 +99,12 @@ int main(int argc, char **argv)
     double cpu_time = ((double) (end - start)) / CLOCKS_PER_SEC;
 
     printf("Training Time : %f seconds\n", cpu_time);
+
+    // Unstandardize input matrix, if necessary
+    if (data.standardized)
+    {
+        unstandardize(&data);
+    }
 
     // Export feature data and calculated predictions
     export_results(&data, data.test_length, "test_predictions.csv");
@@ -130,27 +140,41 @@ void parse_config(struct Dataset *data, struct LinearRegression *linreg)
                 strcpy(data->file_path, value);
                 break;
             case 2:
-                linreg->num_epochs = atoi(value);
+                if (strcmp(value, "true") == 0)
+                {
+                    data->standardized = 1;
+                }
+                else if (strcmp(value, "false") == 0)
+                {
+                    data->standardized = 0;
+                }
+                else
+                {
+                    printf("Standardized must be 'true' or 'false'");
+                }
                 break;
             case 3:
-                linreg->learning_rate = atof(value);
+                linreg->num_epochs = atoi(value);
                 break;
             case 4:
-                linreg->test_proportion = atof(value);
+                linreg->learning_rate = atof(value);
                 break;
             case 5:
-                strcpy(linreg->gradient_descent, value);
+                linreg->test_proportion = atof(value);
                 break;
             case 6:
-                linreg->batch_size = atoi(value);
+                strcpy(linreg->gradient_descent, value);
                 break;
             case 7:
-                linreg->l2_lambda = atof(value);
+                linreg->batch_size = atoi(value);
                 break;
             case 8:
-                linreg->l1_lambda = atof(value);
+                linreg->l2_lambda = atof(value);
                 break;
             case 9:
+                linreg->l1_lambda = atof(value);
+                break;
+            case 10:
                 printf("Too many configuration keys\n");
                 exit(EXIT_FAILURE);
         }
