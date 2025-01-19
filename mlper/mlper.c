@@ -31,6 +31,10 @@ void free_dataset(struct Dataset *data)
     free(data->y_train);
     free(data->y_test);
     free(data->y_pred);
+
+    // Free feature statistics, if applicable
+    free(data->feature_means);
+    free(data->feature_stds);
 }
 
 // Load CSV at specified file path into feature and target variable arrays
@@ -151,6 +155,14 @@ void load(struct Dataset *data)
 // Standardize feature data to mean of 0, standard deviation of 1
 void standardize(struct Dataset *data)
 {
+    // Dynamically allocate memory for feature statistics, initialized at 0
+    data->feature_means = calloc(data->num_features, sizeof(double));
+    data->feature_stds = calloc(data->num_features, sizeof(double));
+    if (!data->feature_means || !data->feature_stds)
+    {
+        printf("Unable to allocate memory for feature statistics.\n");
+    }
+
     // Iterate input features
     for (int j = 0; j < data->num_features; j++)
     {
@@ -162,6 +174,8 @@ void standardize(struct Dataset *data)
         }
         // Calculate mean
         double mean = sum / data->num_entries;
+        // Save to means array
+        data->feature_means[j] = mean;
 
         // Sum differences from mean squared
         double sum_diff_squared = 0.0;
@@ -172,12 +186,32 @@ void standardize(struct Dataset *data)
         }
         // Calculate standard deviation
         double std_dev = sqrt(sum_diff_squared / data->num_entries);
+        // Save to stds array
+        data->feature_stds[j] = std_dev;
 
-        // Perform feature standardization
-        // X = (X - mean) / std_dev
+        // Iterate data entries
         for (int i = 0; i < data->num_entries; i++)
         {
+            // Perform feature standardization
+            // X = (X - mean) / std_dev
             data->X[i * data->num_features + j] = (data->X[i * data->num_features + j] - mean) / std_dev;
+        }
+    }
+}
+
+// Un-standardize feature data back to original values
+void unstandardize(struct Dataset *data)
+{
+    // Iterate input features
+    for (int j = 0; j < data->num_features; j++)
+    {
+        // Iterate data entries
+        for (int i = 0; i < data->num_entries; i++)
+        {
+            // Perform feature un-standardization
+            // X = (X - mean) / std_dev
+            // X = (X * std_dev) + mean
+            data->X[i * data->num_features + j] = (data->X[i * data->num_features + j] * data->feature_stds[j]) + data->feature_means[j];
         }
     }
 }
