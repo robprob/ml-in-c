@@ -14,14 +14,14 @@ The library supports both **static** and **shared** compilation, with both optio
 ---
 ## **Functions**
 
-### **initialize_globals**
+### **initialize_dataset**
 - **Description**: Allocates dynamic memory for feature and target variable arrays.
 - **Prototype**:
   ```c
   void initialize_dataset(struct Dataset *data, int num_features, int num_entries)
   ```
 
-### **free_globals**
+### **free_dataset**
 - **Description**: Frees memory dynamically allocated for dataset.
 - **Prototype**:
   ```c
