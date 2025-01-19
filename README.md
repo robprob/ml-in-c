@@ -1,5 +1,5 @@
 # ML in C
-**ML in C** is a collection of machine learning algorithms implemented with the help of native C library, [MLper](https://github.com/robprob/mlper/tree/main). This project was originally created for educational purposes as I learn C, with the goal of making lightweight, fast, and dependency-free models.
+**ML in C** is a collection of machine learning algorithms implemented with the help of native C library, [MLper](https://github.com/robprob/ml-in-c/tree/main/mlper). This project was originally created for educational purposes as I learn C, with the goal of making lightweight, fast, and dependency-free models.
 
 ## Quick Start
 1. Clone this repo:
@@ -22,6 +22,8 @@
 
 ---
 ## TODO
+- Offer standardization as an optional config feature
+- Un-standardize feature matrix before exporting results
 - Support SGD and mini-batch GD to offer additional options in mitigating the disadvantages compared to Normal equation/SVD with respect to training-instance complexity
 - Improve sample data generation and allow command-line interaction
 
