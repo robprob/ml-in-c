@@ -18,56 +18,56 @@ The library supports both **static** and **shared** compilation, with both optio
 - **Description**: Allocates dynamic memory for feature and target variable arrays.
 - **Prototype**:
   ```c
-  int initialize_globals(int num_features, int num_entries);
+  void initialize_dataset(struct Dataset *data, int num_features, int num_entries)
   ```
 
 ### **free_globals**
-- **Description**: Frees all dynamically allocated memory.
+- **Description**: Frees memory dynamically allocated for dataset.
 - **Prototype**:
   ```c
-  void free_globals();
+  void free_dataset(struct Dataset *data);
   ```
 
 ### **load**
 - **Description**: Loads a CSV file into feature (X) and target (y) arrays.
 - **Prototype**:
   ```c
-  int load(const char *file_path);
+  void load(struct Dataset *data);
   ```
 
 ### **standardize**
 - **Description**: Standardizes feature data to a mean of 0 and a standard deviation of 1.
 - **Prototype**:
   ```c
-  void standardize(double *X, int num_samples, int num_features);
+  void standardize(struct Dataset *data);
   ```
 
 ### **train_test_split**
 - **Description**: Splits data into training and test sets based on a given test proportion.
 - **Prototype**:
   ```c
-  void train_test_split(double test_proportion);
+  void train_test_split(struct Dataset *data, double test_proportion);
   ```
 
 ### **mean_squared_error**
 - **Description**: Computes the Mean Squared Error (MSE) between predicted and actual values.
 - **Prototype**:
   ```c
-  double mean_squared_error(double *y_actual, double *y_pred, int num_samples);
+  double mean_squared_error(double *y_actual, double *y_pred, int num_predictions);
   ```
 
 ### **export_predictions**
 - **Description**: Exports predictions to a CSV file.
 - **Prototype**:
   ```c
-  void export_predictions(const char *file_path, double *y_pred, int num_samples);
+  void export_predictions(double *y_pred, int num_predictions, char *file_name);
   ```
 
 ### **export_results**
 - **Description**: Exports full data, actual values, and predictions to a CSV file.
 - **Prototype**:
   ```c
-  void export_results(const char *file_path, double *X, double *y_actual, double *y_pred, int num_samples, int num_features);
+  void export_results(struct Dataset *data, int num_predictions, char *file_name);
   ```
 ---
 ## **How to Clone/Install**
