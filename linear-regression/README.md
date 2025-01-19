@@ -28,34 +28,24 @@ Implementation of Linear Regression using gradient descent, with support for fin
    ```bash
    make
    ```
-3. Run as described in the following **Usage Examples**
+3. Run using parameters specified in **config.txt**
+   ```bash
+   ./linreg
+   ```
 
 ## Usage Examples
-### Default Parameters
-Run the program with default test settings, or 100 epochs and a learning rate of 0.05:
-```bash
-./linreg
+### Edit fields in config.txt
+```txt
+file_path = ../sample-data/linear_multi_var_500.csv
+num_epochs = 100
+learning_rate = 0.05
+test_proportion = 0.3
+gradient_descent = batch
+batch_size = 0
+l2_lambda = 0.1
+l1_lambda = 0.05
 ```
-### Linear Regression
-Train a linear regression model, specifying number of epochs and learning rate:
-```bash
-./linreg ../sample-data/linear_multi_var_500.csv 1000 0.01
-```
-### Ridge Regression
-Train a linear regression with L2 regularization (ridge) using a lambda of 0.1:
-```base
-./linreg ../sample-data/linear_multi_var_500.csv 1000 0.01 --ridge 0.1
-```
-### Lasso Regression
-Train a linear regression model with L1 regularization (lasso) using a lambda of 0.05:
-```base
-./linreg ../sample-data/linear_multi_var_500.csv 1000 0.01 --lasso 0.05
-```
-### Elastic Net
-Train a linear regression model using a linear combination of L2 and L1 regularization:
-```base
-./linreg ../sample-data/linear_multi_var_500.csv 1000 0.01 --ridge 0.1 --lasso 0.05
-```
+
 ## Command Log Output
 Below is an example of program output:
 ```bash
