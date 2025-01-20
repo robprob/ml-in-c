@@ -24,6 +24,7 @@
 ## TODO
 - Support SGD and mini-batch GD to offer additional options in mitigating the disadvantages compared to Normal equation/SVD with respect to training-instance complexity
 - Improve sample data generation and allow command-line interaction
+- Generally improve pre-processing utility of melper library
 
 ## Future Models
 - Logistic Regression
