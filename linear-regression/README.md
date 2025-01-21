@@ -24,7 +24,7 @@ Implementation of Linear Regression using gradient descent, with support for fin
    git clone https://github.com/robprob/ml-in-c.git
    cd ml-in-c/linear-regression
    ```
-2. Build executable:
+2. Build executable (requires a C compiler):
    ```bash
    make
    ```
