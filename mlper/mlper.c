@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <time.h>
 
 #include "mlper.h"
 
@@ -152,66 +153,74 @@ void load(struct Dataset *data)
     fclose(file);
 }
 
-// Standardize feature data to mean of 0, standard deviation of 1
+// Standardize feature data to mean of 0, standard deviation of 1, using training data statistics
 void standardize(struct Dataset *data)
 {
-    // Dynamically allocate memory for feature statistics, initialized at 0
+    // Dynamically allocate memory for training feature statistics, initialized at 0
     data->feature_means = calloc(data->num_features, sizeof(double));
     data->feature_stds = calloc(data->num_features, sizeof(double));
     if (!data->feature_means || !data->feature_stds)
     {
         printf("Unable to allocate memory for feature statistics.\n");
+        exit(EXIT_FAILURE);
     }
 
     // Iterate input features
     for (int j = 0; j < data->num_features; j++)
     {
-        // Sum feature data
+        // Sum feature data of training only
         double sum = 0.0;
-        for (int i = 0; i < data->num_entries; i++)
+        for (int i = 0; i < data->train_length; i++)
         {
-            sum += data->X[i * data->num_features + j];
+            sum += data->X_train[i * data->num_features + j];
         }
         // Calculate mean
-        double mean = sum / data->num_entries;
+        double mean = sum / data->train_length;
         // Save to means array
         data->feature_means[j] = mean;
 
         // Sum differences from mean squared
         double sum_diff_squared = 0.0;
-        for (int i = 0; i < data->num_entries; i++)
+        for (int i = 0; i < data->train_length; i++)
         {
-            double diff = data->X[i * data->num_features + j] - mean;
+            double diff = data->X_train[i * data->num_features + j] - mean;
             sum_diff_squared += diff * diff;
         }
         // Calculate standard deviation
-        double std_dev = sqrt(sum_diff_squared / data->num_entries);
+        double std_dev = sqrt(sum_diff_squared / data->train_length);
         // Save to stds array
         data->feature_stds[j] = std_dev;
 
-        // Iterate data entries
-        for (int i = 0; i < data->num_entries; i++)
+        // Catch
+
+        // Standardize training data
+        for (int i = 0; i < data->train_length; i++)
         {
-            // Perform feature standardization
             // X = (X - mean) / std_dev
-            data->X[i * data->num_features + j] = (data->X[i * data->num_features + j] - mean) / std_dev;
+            data->X_train[i * data->num_features + j] = (data->X_train[i * data->num_features + j] - mean) / std_dev;
+        }
+        // Standardize test data
+        for (int i = 0; i < data->test_length; i++)
+        {
+            // X = (X - mean) / std_dev
+            data->X_test[i * data->num_features + j] = (data->X_test[i * data->num_features + j] - mean) / std_dev;
         }
     }
 }
 
-// Un-standardize feature data back to original values
-void unstandardize(struct Dataset *data)
+// Un-standardize specified feature data matrix back to original values
+void unstandardize(struct Dataset *data, double *feature_data, int num_entries)
 {
-    // Iterate input features
-    for (int j = 0; j < data->num_features; j++)
+    // Iterate data entries
+    for (int i = 0; i < num_entries; i++)
     {
-        // Iterate data entries
-        for (int i = 0; i < data->num_entries; i++)
+        // Iterate data features
+        for (int j = 0; j < data->num_features; j++)
         {
             // Perform feature un-standardization
             // X = (X - mean) / std_dev
             // X = (X * std_dev) + mean
-            data->X[i * data->num_features + j] = (data->X[i * data->num_features + j] * data->feature_stds[j]) + data->feature_means[j];
+            feature_data[i * data->num_features + j] = (feature_data[i * data->num_features + j] * data->feature_stds[j]) + data->feature_means[j];
         }
     }
 }
@@ -219,8 +228,10 @@ void unstandardize(struct Dataset *data)
 // Split data into training/test sets
 void train_test_split(struct Dataset *data, double test_proportion)
 {
-    // Optionally seed psuedo rng
-    // srand(115);
+    // Seed psuedo rng with current time
+    srand(time(NULL));
+
+    data->test_length = 0;
 
     // Iterate indices of sample data
     for (int i = 0; i < data->num_entries; i++)
@@ -256,6 +267,34 @@ void train_test_split(struct Dataset *data, double test_proportion)
     data->X_test = realloc(data->X_test, data->test_length * data->num_features * sizeof(double));
     data->y_train = realloc(data->y_train, data->train_length * sizeof(double));
     data->y_test = realloc(data->y_test, data->test_length * sizeof(double));
+}
+
+// Shuffle random entries to "generate" a training batch of specified size
+void shuffle_batch(struct Dataset *data, int batch_size)
+{
+    int train_length = data->train_length;
+    int num_features = data->num_features;
+    double *X_train = data->X_train;
+    double *y_train = data->y_train;
+
+    // Swap random training entries into the first i positions of the dataset, where i is batch size
+    for (int i = 0; i < batch_size; i++)
+    {
+        // Generate random index in bounds of training set
+        int rand_index = rand() % train_length;
+        // Iterate feature values
+        for (int j = 0; j < num_features; j++)
+        {
+            // Swap feature data on randomly selected index
+            double temp_X = X_train[i * num_features + j];
+            X_train[i * num_features + j] = X_train[rand_index * num_features + j];
+            X_train[rand_index * num_features + j] = temp_X;
+        }
+        // Swap target variable data on randomly selected index
+        double temp_y = y_train[i];
+        y_train[i] = y_train[rand_index];
+        y_train[rand_index] = temp_y;
+    }
 }
 
 // Computes Mean Squared Error (MSE) between predicted and actual values.
@@ -301,7 +340,7 @@ void export_predictions(double *y_pred, int num_predictions, char *file_name)
 // Exports full data, actual values, and predictions to a CSV file
 void export_results(struct Dataset *data, int num_predictions, char *file_name)
 {
-    double *X = data->X;
+    double *X_test = data->X_test;
     double *y_actual = data->y_test;
     double *y_pred = data->y_pred;
     int num_features = data->num_features;
@@ -327,7 +366,7 @@ void export_results(struct Dataset *data, int num_predictions, char *file_name)
         // Write feature data
         for (int j = 0; j < num_features; j++)
         {
-            fprintf(file, "%f,", X[i * num_features + j]);
+            fprintf(file, "%f,", X_test[i * num_features + j]);
         }
         // Write target data
         fprintf(file, "%f,%f\n", y_actual[i], y_pred[i]);
