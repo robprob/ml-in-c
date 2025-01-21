@@ -22,7 +22,8 @@
 
 ---
 ## TODO
-- Provide more detailed help for model configuration, such as recommending early stopping is disabled for SGD
+- Support splitting training set into an additional validation set, allowing cross-validation to prevent data leakage
+- Provide more detailed help for model configuration, e.g. recommending early stopping is disabled for SGD
 - Refactor linreg.c into modular functions
 - Improve sample data generation and allow command-line interaction
 - Generally improve pre-processing utility of melper library
