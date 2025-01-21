@@ -1,9 +1,10 @@
-file_path = ../sample-data/linear_multi_var_10000.csv
+file_path = ../sample-data/linear_multi_var_500.csv
 standardize = true
-num_epochs = 100
+num_epochs = 1000
 learning_rate = 0.05
 test_proportion = 0.3
-gradient_descent = batch
+early_stopping = true
 batch_size = 0
-l2_lambda = 0.0
-l1_lambda = 0.0
+l2_alpha = 0.0
+l1_alpha = 0.0
+mix_ratio = 0.0
