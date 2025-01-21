@@ -206,7 +206,18 @@ void parse_config(struct Dataset *data, struct LinearRegression *linreg)
                 }
                 break;
             case 7:
-                linreg->batch_size = atoi(value);
+                if (strcmp(value, "batch") == 0)
+                {
+                    linreg->gradient_descent = 0;
+                }
+                else if (strcmp(value, "stochastic") == 0)
+                {
+                    linreg->gradient_descent = 1;
+                }
+                else
+                {
+                    printf("Gradient Descent options: 'batch' or 'stochastic' (enter stochastic and batch size for mini-batch)\n");
+                }
                 break;
             case 8:
                 linreg->l2_alpha = atof(value);
@@ -268,7 +279,7 @@ void fit_model(struct LinearRegression *linreg, struct Dataset *data)
     {
         train_length = batch_size;
     }
-
+  
     // Iterate epochs
     for (int epoch = 0; epoch <= num_epochs; epoch++)
     {
