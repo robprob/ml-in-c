@@ -56,6 +56,13 @@ The library supports both **static** and **shared** compilation, with both optio
   void train_test_split(struct Dataset *data, double test_proportion);
   ```
 
+### **shuffle_batch**
+- **Description**: Shuffle random entries to "generate" a training batch of specified size.
+- **Prototype**:
+  ```c
+  void shuffle_batch(struct Dataset *data, int batch_size);
+  ```
+
 ### **mean_squared_error**
 - **Description**: Computes the Mean Squared Error (MSE) between predicted and actual values.
 - **Prototype**:
