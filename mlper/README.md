@@ -79,8 +79,11 @@ The library supports both **static** and **shared** compilation, with both optio
 ---
 ## **How to Clone/Install**
    ```bash
+   // Clone repo and move to mlper directory
    git clone https://github.com/robprob/ml-in-c.git
    cd ml-in-c/mlper
+
+   // Compile using Makefile (requires a C compiler)
    make
 
    // Optional Installation
