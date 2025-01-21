@@ -22,11 +22,14 @@
 
 ---
 ## TODO
-- Support SGD and mini-batch GD to offer additional options in mitigating the disadvantages compared to Normal equation/SVD with respect to training-instance complexity
+- Support splitting training set into an additional validation set, allowing cross-validation to prevent data leakage
+- Provide more detailed help for model configuration, e.g. recommending early stopping is disabled for SGD
+- Refactor linreg.c into modular functions (As more models are developed, shift additional utilities to Mlper)
 - Improve sample data generation and allow command-line interaction
 - Generally improve pre-processing utility of melper library
 
 ## Future Models
+- Polynomial Regression
 - Logistic Regression
 - GLMs
 - K-Means Clustering

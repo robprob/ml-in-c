@@ -26,8 +26,7 @@ struct LinearRegression {
     double learning_rate;      // Training "step" size
     double test_proportion;    // Proportion of training data held in test set
     int early_stopping;        // Truth value of early stopping
-    int gradient_descent;      // Chosen variant of GD (0 is batch, 1 is stochastic)
-    int batch_size;            // Number of samples taken per epoch (ignored for batch GD)
+    int batch_size;            // Number of samples taken per epoch (leave at 0 for batch GD)
     double l2_alpha;           // Ridge coefficient
     double l1_alpha;           // Lasso coefficient
     double mix_ratio;          // 0 is equivalent to pure ridge, 1 is equivalent to pure lasso
@@ -51,7 +50,7 @@ int main(int argc, char **argv)
     // Parse data path and model hyperparameter from config file
     parse_config(&data, &linreg);
 
-
+    /*
     // Print selected parameters
     printf("File Path: %s\n", data.file_path);
     printf("Standardized: %i\n", data.standardized);
@@ -60,23 +59,22 @@ int main(int argc, char **argv)
     printf("Test Proportion: %g\n", linreg.test_proportion);
     printf("Early Stopping: %i\n", linreg.early_stopping);
     printf("Batch Size: %i\n", linreg.batch_size);
-    printf("Gradient Descent: %i\n", linreg.gradient_descent);
     printf("L2 alpha: %g\n", linreg.l2_alpha);
     printf("L1 alpha: %g\n", linreg.l1_alpha);
     printf("Elastic Net Mix Ratio: %g\n", linreg.mix_ratio);
-
+    */
 
     // Load feature and target variable data into arrays
     load(&data);
 
-    // If specified, standardize feature data, X, to mean of 0, standard deviation of 1
+    // Split data into training and test arrays
+    train_test_split(&data, linreg.test_proportion);
+
+    // If specified, standardize feature arrays to mean of 0, standard deviation of 1
     if (data.standardized)
     {
         standardize(&data);
     }
-
-    // Split data into training and test arrays
-    train_test_split(&data, linreg.test_proportion);
 
     // Initialize weight vector and bias at 0 (horizontal line)
     linreg.w = calloc(data.num_features, sizeof(double));
@@ -95,6 +93,31 @@ int main(int argc, char **argv)
 
     end = clock();
 
+    // Print trained model parameters
+    printf("\nTrained Model Parameters (un-standardized)\n");
+    printf("Weights: ");
+    for (int j = 0; j < data.num_features; j++)
+    {
+        // Un-standardize model weights
+        double weight = linreg.w[j] / data.feature_stds[j];
+        printf("%g", weight);
+        if (j != data.num_features - 1)
+        {
+            printf(", ");
+        }
+        else
+        {
+            printf("\n");
+        }
+    }
+    // Un-standardize bias
+    double bias = linreg.b;
+    for (int j = 0; j < data.num_features; j++)
+    {
+        bias -= (linreg.w[j] * data.feature_means[j]) / data.feature_stds[j];
+    }
+    printf("Bias: %g\n", bias);
+
     // Generate predictions using trained model
     predict(&linreg, &data, data.X_test, data.test_length);
 
@@ -104,12 +127,12 @@ int main(int argc, char **argv)
 
     double cpu_time = ((double) (end - start)) / CLOCKS_PER_SEC;
 
-    printf("Training Time : %f seconds\n", cpu_time);
+    printf("Training Time: %f seconds\n", cpu_time);
 
     // Unstandardize input matrix, if necessary
     if (data.standardized)
     {
-        unstandardize(&data);
+        unstandardize(&data, data.X_test, data.test_length);
     }
 
     // Export feature data and calculated predictions
@@ -197,22 +220,15 @@ void parse_config(struct Dataset *data, struct LinearRegression *linreg)
                 }
                 break;
             case 8:
-                if (linreg->gradient_descent == 1 && atoi(value) == 0)
-                {
-                    printf("Must specify a batch size with stochastic gradient descent.\n");
-                }
-                linreg->batch_size = atoi(value);
-                break;
-            case 9:
                 linreg->l2_alpha = atof(value);
                 break;
-            case 10:
+            case 9:
                 linreg->l1_alpha = atof(value);
                 break;
-            case 11:
+            case 10:
                 linreg->mix_ratio = atof(value);
                 break;
-            case 12:
+            case 11:
                 printf("Too many configuration keys\n");
                 exit(EXIT_FAILURE);
         }
@@ -229,6 +245,7 @@ void fit_model(struct LinearRegression *linreg, struct Dataset *data)
 
     int num_epochs = linreg->num_epochs;
     double learning_rate = linreg->learning_rate;
+    int batch_size = linreg->batch_size;
     double l2_alpha = linreg->l2_alpha;
     double l1_alpha = linreg->l1_alpha;
     double r = linreg->mix_ratio;
@@ -251,11 +268,28 @@ void fit_model(struct LinearRegression *linreg, struct Dataset *data)
         exit(EXIT_FAILURE);
     }
 
-    // Prepare training set based on
+    // Validate chosen batch size
+    if (batch_size > train_length) {
+        printf("Batch size cannot be greater than size of training set, Batch Size: %i, Training Size: %i\n.", batch_size, train_length);
+        exit(EXIT_FAILURE);
+    }
 
+    // Adjust training length to batch size
+    if (batch_size != 0)
+    {
+        train_length = batch_size;
+    }
+  
     // Iterate epochs
     for (int epoch = 0; epoch <= num_epochs; epoch++)
     {
+        // Generate smaller batch, if necessary
+        if (batch_size != 0)
+        {
+            // "Generate" a random batch by swapping training entries
+            shuffle_batch(data, batch_size);
+        }
+
         // Reset gradient accumulators
         memset(w_sums, 0, num_features * sizeof(double));
         double b_sum = 0;
