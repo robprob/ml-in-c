@@ -1,4 +1,4 @@
-## v0.1.0 (2025-01-19)
+## v0.1.0 (2025-01-20)
 ### Added
 - This changelog :)
 - Elastic net mix-ratio, r, added as option in config.txt
