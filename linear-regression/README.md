@@ -10,7 +10,8 @@ Implementation of Linear Regression using gradient descent, with support for fin
 
 ### Tuning
 - Customizable number of epochs and learning rate
-- Regularization: L2 (Ridge), L1 (Lasso), and Elastic Net
+- Regularization: L2 (Ridge), L1 (Lasso), and Elastic Net with mix-ratio, r
+- Early stopping when validation set has reached a minimum error, preventing overfitting
 
 ### Performance Metrics
 - Regularly reports MSE during training and then final MSE on test set
@@ -37,37 +38,31 @@ Implementation of Linear Regression using gradient descent, with support for fin
 ### Edit fields in config.txt
 ```txt
 file_path = ../sample-data/linear_multi_var_500.csv
-num_epochs = 100
+standardize = true
+num_epochs = 1000
 learning_rate = 0.05
 test_proportion = 0.3
-gradient_descent = batch
+early_stopping = true
 batch_size = 0
-l2_lambda = 0.1
-l1_lambda = 0.05
+l2_alpha = 0.0
+l1_alpha = 0.0
+mix_ratio = 0.0
 ```
 
 ## Command Log Output
 Below is an example of program output:
 ```bash
-File Path: ../sample-data/linear_multi_var_500.csv
-Number of Epochs: 100
-Learning Rate: 0.05
-L2 Lambda: 0
-L1 Lambda: 0
-Epoch 0: Train MSE: 2799.026694
-Epoch 10: Train MSE: 338.355341
-Epoch 20: Train MSE: 47.654339
-Epoch 30: Train MSE: 13.164656
-Epoch 40: Train MSE: 9.057297
-Epoch 50: Train MSE: 8.566527
-Epoch 60: Train MSE: 8.507713
-Epoch 70: Train MSE: 8.500646
-Epoch 80: Train MSE: 8.499795
-Epoch 90: Train MSE: 8.499692
-Epoch 100: Train MSE: 8.499679
+Epoch 0: Train MSE: 2868.285045
+Epoch 100: Train MSE: 8.914645
+Epoch 200: Train MSE: 8.914643
+Stopping early, validation set has reached a minimum error.
 
-Test MSE: 8.851673
-Training Time : 0.001422 seconds
+Trained Model Parameters (un-standardized)
+Weights: 6.99622, 5.95143, 0.213616, -4.09234
+Bias: 4.92785
+
+Test MSE: 8.031067
+Training Time: 0.002444 seconds
 ```
 
 
