@@ -36,17 +36,17 @@ The library supports both **static** and **shared** compilation, with both optio
   ```
 
 ### **standardize**
-- **Description**: Standardizes feature data to a mean of 0 and a standard deviation of 1.
+- **Description**: Standardize feature data to mean of 0, standard deviation of 1, using training data statistics.
 - **Prototype**:
   ```c
   void standardize(struct Dataset *data);
   ```
 
 ### **unstandardize**
-- **Description**: Un-standardize feature data back to original values.
+- **Description**: Un-standardize specified feature data matrix back to original values.
 - **Prototype**:
   ```c
-  void unstandardize(struct Dataset *data);
+  void unstandardize(struct Dataset *data, double *feature_data, int num_entries);
   ```
 
 ### **train_test_split**
@@ -79,8 +79,8 @@ The library supports both **static** and **shared** compilation, with both optio
 ---
 ## **How to Clone/Install**
    ```bash
-   git clone https://github.com/robprob/mlper.git
-   cd mlper
+   git clone https://github.com/robprob/ml-in-c.git
+   cd ml-in-c/mlper
    make
 
    // Optional Installation
