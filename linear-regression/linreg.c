@@ -17,6 +17,7 @@ E = (1/2) * Σ(i=1)^n (yi - ^yi)^2
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "mlper.h"
 
@@ -24,7 +25,6 @@ E = (1/2) * Σ(i=1)^n (yi - ^yi)^2
 struct LinearRegression {
     int num_epochs;            // Number of training iterations
     double learning_rate;      // Training "step" size
-    double test_proportion;    // Proportion of training data held in test set
     int early_stopping;        // Truth value of early stopping
     int batch_size;            // Number of samples taken per epoch (leave at 0 for batch GD)
     double l2_alpha;           // Ridge coefficient
@@ -56,7 +56,8 @@ int main(int argc, char **argv)
     printf("Standardized: %i\n", data.standardized);
     printf("Number of Epochs: %i\n", linreg.num_epochs);
     printf("Learning Rate: %g\n", linreg.learning_rate);
-    printf("Test Proportion: %g\n", linreg.test_proportion);
+    printf("Test Proportion: %g\n", data.test_proportion);
+    printf("Validation Proportion: %g\n", data.valid_proportion);
     printf("Early Stopping: %i\n", linreg.early_stopping);
     printf("Batch Size: %i\n", linreg.batch_size);
     printf("L2 alpha: %g\n", linreg.l2_alpha);
@@ -68,13 +69,17 @@ int main(int argc, char **argv)
     load(&data);
 
     // Split data into training and test arrays
-    train_test_split(&data, linreg.test_proportion);
-
+    train_test_split(&data, data.test_proportion);
     // If specified, standardize feature arrays to mean of 0, standard deviation of 1
-    if (data.standardized)
-    {
-        standardize(&data);
-    }
+    standardize(&data);
+    // Further split training data into validation set, if specified
+    validation_split(&data, data.valid_proportion);
+
+
+    // Print size of each data set
+    printf("Training Size: %i\n", data.train_length);
+    printf("Validation Size: %i\n", data.valid_length);
+    printf("Test Size: %i\n\n", data.test_length);
 
     // Initialize weight vector and bias at 0 (horizontal line)
     linreg.w = calloc(data.num_features, sizeof(double));
@@ -155,84 +160,78 @@ void parse_config(struct Dataset *data, struct LinearRegression *linreg)
     }
 
     // Line reading buffer
-    char line[128];
-    int line_num = 1;
+    char line[256];
 
     while (fgets(line, sizeof(line), file))
     {
+        char key [128];
         char value[128];
-        sscanf(line, "%*[^=]=%s", value);
 
-        switch (line_num++)
+        // Skip headers and blank lines
+        if (line[0] == '[' || line[0] == '\n')
         {
-            case 1:
+            continue;
+        }
+
+        if (sscanf(line, "%[^=]=%s", key, value) == 2)
+        {
+            if (strcmp(key, "file_path ") == 0)
+            {
                 strcpy(data->file_path, value);
-                break;
-            case 2:
-                if (strcmp(value, "true") == 0)
-                {
-                    data->standardized = 1;
-                }
-                else if (strcmp(value, "false") == 0)
-                {
-                    data->standardized = 0;
-                }
-                else
-                {
-                    printf("Standardized options: 'true' or 'false'\n");
-                }
-                break;
-            case 3:
+            }
+            else if (strcmp(key, "standardize ") == 0)
+            {
+                data->standardized = strcmp(value, "true") == 0 ? 1 : 0;
+            }
+            else if (strcmp(key, "num_epochs ") == 0)
+            {
                 linreg->num_epochs = atoi(value);
-                break;
-            case 4:
+            }
+            else if (strcmp(key, "learning_rate ") == 0)
+            {
                 linreg->learning_rate = atof(value);
-                break;
-            case 5:
-                linreg->test_proportion = atof(value);
-                break;
-            case 6:
-                if (strcmp(value, "true") == 0)
-                {
-                    linreg->early_stopping = 1;
-                }
-                else if (strcmp(value, "false") == 0)
-                {
-                    linreg->early_stopping = 0;
-                }
-                else
-                {
-                    printf("Early Stopping options: 'true' or 'false'\n");
-                }
-                break;
-            case 7:
-                if (strcmp(value, "batch") == 0)
-                {
-                    linreg->gradient_descent = 0;
-                }
-                else if (strcmp(value, "stochastic") == 0)
-                {
-                    linreg->gradient_descent = 1;
-                }
-                else
-                {
-                    printf("Gradient Descent options: 'batch' or 'stochastic' (enter stochastic and batch size for mini-batch)\n");
-                }
-                break;
-            case 8:
+            }
+            else if (strcmp(key, "test_proportion ") == 0)
+            {
+                data->test_proportion = atof(value);
+            }
+            else if (strcmp(key, "valid_proportion ") == 0)
+            {
+                data->valid_proportion = atof(value);
+            }
+            else if (strcmp(key, "early_stopping ") == 0)
+            {
+                linreg->early_stopping = strcmp(value, "true") == 0 ? 1 : 0;
+            }
+            else if (strcmp(key, "batch_size ") == 0)
+            {
+                linreg->batch_size = atoi(value);
+            }
+            else if (strcmp(key, "l2_alpha ") == 0)
+            {
                 linreg->l2_alpha = atof(value);
-                break;
-            case 9:
+            }
+            else if (strcmp(key, "l1_alpha ") == 0)
+            {
                 linreg->l1_alpha = atof(value);
-                break;
-            case 10:
+            }
+            else if (strcmp(key, "mix_ratio ") == 0)
+            {
                 linreg->mix_ratio = atof(value);
-                break;
-            case 11:
-                printf("Too many configuration keys\n");
+            }
+            else
+            {
+                printf("Invalid config key, %s\n", key);
                 exit(EXIT_FAILURE);
+            }
+        }
+        else
+        {
+            printf("Invalid config line: %s\n", line);
+            exit(EXIT_FAILURE);
         }
     }
+
     fclose(file);
 }
 
@@ -256,9 +255,11 @@ void fit_model(struct LinearRegression *linreg, struct Dataset *data)
 
     // If necessary, implement test MSE evaluation for early stopping
     int early_stopping = linreg->early_stopping;
-    double test_MSE = 0.0;
-    double prev_test_MSE = 0.0;
-    double sensitivity = 0.0001; // Minimum acceptable decrease in MSE
+    double valid_MSE = 0.0;
+    double prev_valid_MSE = -1.0;
+    double sensitivity = 0.005; // Minimum acceptable decrease in MSE
+    int patience = 2;
+    int patience_counter = 0;
 
     // Gradient accumulation array
     double *w_sums = calloc(num_features, sizeof(double));
@@ -279,7 +280,12 @@ void fit_model(struct LinearRegression *linreg, struct Dataset *data)
     {
         train_length = batch_size;
     }
-  
+
+    // Print terminal log header
+    printf("==========================================\n");
+    printf("| Epoch |   Train MSE   | Validation MSE |\n");
+    printf("==========================================\n");
+
     // Iterate epochs
     for (int epoch = 0; epoch <= num_epochs; epoch++)
     {
@@ -369,38 +375,47 @@ void fit_model(struct LinearRegression *linreg, struct Dataset *data)
             }
             linreg->b = b;
 
-            // Make predictions and calculate MSE
+            // Make predictions and calculate training MSE
             predict(linreg, data, data->X_train, data->train_length);
             double MSE = mean_squared_error(data->y_train, data->y_pred, data->train_length);
-            printf("Epoch %d: Train MSE: %f\n", epoch, MSE);
+            printf("| %5d | %13.5f |", epoch, MSE);
 
-
-            // Evaluate test MSE
-            predict(linreg, data, data->X_test, data->test_length);
-            test_MSE = mean_squared_error(data->y_test, data->y_pred, data->test_length);
-
-            // Evaluate for selection of early stopping
-            if (!early_stopping)
+            // Evaluate for validation set/early stopping
+            if (data->valid_proportion == 0.0 || !early_stopping)
             {
+                printf("       N/A      |\n");
                 continue;
             }
+
+            // Make predictions and calculate validation MSE
+            predict(linreg, data, data->X_valid, data->valid_length);
+            valid_MSE = mean_squared_error(data->y_valid, data->y_pred, data->valid_length);
+            printf(" %14.5f |\n", valid_MSE);
 
             // If applicable, set as initial error and continue
-            if (prev_test_MSE == 0.0)
+            if (prev_valid_MSE == -1.0)
             {
-                prev_test_MSE = MSE;
+                prev_valid_MSE = valid_MSE;
                 continue;
             }
 
-            // Compare difference to consider early stopping
-            double diff = test_MSE - prev_test_MSE;
-            if (diff > 0.0 || diff > (sensitivity * -1))
+            // Evaluate MSE difference and current patience counter to consider early stopping
+            if (valid_MSE >= prev_valid_MSE || (prev_valid_MSE - valid_MSE) < sensitivity)
             {
-                printf("Stopping early, validation set has reached a minimum error.\n");
-                free(w_sums);
-                return;
+                patience_counter++;
+                if (patience_counter >= patience) {
+                    // Print footer of terminal log and exit early
+                    printf("------------------------------------------\n");
+                    printf("Stopping early, validation set has reached a minimum error.\n");
+                    free(w_sums);
+                    return;
+                }
             }
-            prev_test_MSE = test_MSE;
+            else
+            {
+                patience_counter = 0;
+            }
+            prev_valid_MSE = valid_MSE;
         }
     }
 
@@ -410,6 +425,9 @@ void fit_model(struct LinearRegression *linreg, struct Dataset *data)
         linreg->w[j] = w[j];
     }
     linreg->b = b;
+
+    // Print footer of terminal log
+    printf("------------------------------------------\n");
 
     // Free gradient accumulator array
     free(w_sums);

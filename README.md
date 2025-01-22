@@ -22,11 +22,11 @@
 
 ---
 ## TODO
-- Support splitting training set into an additional validation set, allowing cross-validation to prevent data leakage
 - Provide more detailed help for model configuration, e.g. recommending early stopping is disabled for SGD
 - Refactor linreg.c into modular functions (As more models are developed, shift additional utilities to Mlper)
 - Improve sample data generation and allow command-line interaction
-- Generally improve pre-processing utility of melper library
+- Add additional pre-processing/analysis utility to MLper library
+- Improve readability and visual appeal of terminal output
 
 ## Future Models
 - Polynomial Regression

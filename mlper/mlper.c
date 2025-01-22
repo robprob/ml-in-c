@@ -28,8 +28,10 @@ void free_dataset(struct Dataset *data)
     free(data->X);
     free(data->y);
     free(data->X_train);
+    free(data->X_valid);
     free(data->X_test);
     free(data->y_train);
+    free(data->y_valid);
     free(data->y_test);
     free(data->y_pred);
 
@@ -156,6 +158,11 @@ void load(struct Dataset *data)
 // Standardize feature data to mean of 0, standard deviation of 1, using training data statistics
 void standardize(struct Dataset *data)
 {
+    if (!data->standardized)
+    {
+        return;
+    }
+
     // Dynamically allocate memory for training feature statistics, initialized at 0
     data->feature_means = calloc(data->num_features, sizeof(double));
     data->feature_stds = calloc(data->num_features, sizeof(double));
@@ -190,8 +197,6 @@ void standardize(struct Dataset *data)
         double std_dev = sqrt(sum_diff_squared / data->train_length);
         // Save to stds array
         data->feature_stds[j] = std_dev;
-
-        // Catch
 
         // Standardize training data
         for (int i = 0; i < data->train_length; i++)
@@ -228,45 +233,129 @@ void unstandardize(struct Dataset *data, double *feature_data, int num_entries)
 // Split data into training/test sets
 void train_test_split(struct Dataset *data, double test_proportion)
 {
+
+    int num_entries = data->num_entries;
+    int num_features = data->num_features;
+
+    int train_length = 0;
+    int test_length = 0;
+
+
     // Seed psuedo rng with current time
     srand(time(NULL));
 
-    data->test_length = 0;
-
     // Iterate indices of sample data
-    for (int i = 0; i < data->num_entries; i++)
+    for (int i = 0; i < num_entries; i++)
     {
         // Generate random number between 0 and 1
-        float number = rand() / ((double) RAND_MAX + 1);
+        float number = (float) rand() / RAND_MAX;
 
         // Assign to correct data split
         if (number <= test_proportion)
         {
             // Copy all feature values
-            for (int j = 0; j < data->num_features; j++)
+            for (int j = 0; j < num_features; j++)
             {
-                data->X_test[data->test_length * data->num_features + j] = data->X[i * data->num_features + j];
+                data->X_test[test_length * num_features + j] = data->X[i * num_features + j];
             }
-            data->y_test[data->test_length] = data->y[i];
-            data->test_length++;
+            data->y_test[test_length] = data->y[i];
+            test_length++;
         }
         else
         {
             // Copy all feature values
-            for (int j = 0; j < data->num_features; j++)
+            for (int j = 0; j < num_features; j++)
             {
-                data->X_train[data->train_length * data->num_features + j] = data->X[i * data->num_features + j];
+                data->X_train[train_length * num_features + j] = data->X[i * num_features + j];
             }
-            data->y_train[data->train_length] = data->y[i];
-            data->train_length++;
+            data->y_train[train_length] = data->y[i];
+            train_length++;
         }
     }
+
+    // Assign updated array lengths
+    data->train_length = train_length;
+    data->test_length = test_length;
 
     // Dynamically reallocate memory to true array sizes
     data->X_train = realloc(data->X_train, data->train_length * data->num_features * sizeof(double));
     data->X_test = realloc(data->X_test, data->test_length * data->num_features * sizeof(double));
     data->y_train = realloc(data->y_train, data->train_length * sizeof(double));
     data->y_test = realloc(data->y_test, data->test_length * sizeof(double));
+}
+
+// Further split training data into training/validation set
+void validation_split(struct Dataset *data, double valid_proportion)
+{
+    if (valid_proportion == 0.0)
+    {
+        return;
+    }
+
+    // Seed psuedo rng with current time
+    srand(time(NULL));
+
+    int train_length = data->train_length;
+    int new_train_length = 0;
+
+    int valid_length = 0;
+
+    int num_features = data->num_features;
+
+    // Initialize memory for validation arrays to 0
+    data->X_valid = calloc(train_length * num_features, sizeof(double));
+    data->y_valid = calloc(train_length, sizeof(double));
+    if (!data->X_valid || !data->y_valid)
+    {
+        printf("Unable to allocate memory for validation set.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    // Adjust valid proportion, which is proportion of total dataset, to training set size
+    double train_proportion = (1 - data->test_proportion);
+    double adjusted_valid_proportion = (valid_proportion / train_proportion);
+
+    // Iterate training set
+    for (int i = 0; i < train_length; i++)
+    {
+        // Generate random number between 0 and 1
+        float number = (float) rand() / RAND_MAX;
+
+        // Assign to correct data split
+        if (number <= adjusted_valid_proportion)
+        {
+            // Iterate feature columns, copying values to validation set
+            for (int j = 0; j < num_features; j++)
+            {
+                data->X_valid[valid_length * num_features + j] = data->X_train[i * num_features + j];
+            }
+            // Copy target values
+            data->y_valid[valid_length] = data->y_train[i];
+            valid_length++;
+        }
+        else
+        {
+            // Iterate feature columns, copying values back to new location in train set
+            for (int j = 0; j < num_features; j++)
+            {
+                data->X_train[new_train_length * num_features + j] = data->X_train[i * num_features + j];
+            }
+            // Copy target values
+            data->y_train[new_train_length] = data->y_train[i];
+            new_train_length++;
+        }
+    }
+
+    // Assign updated array lengths
+    data->valid_length = valid_length;
+    data->train_length = new_train_length;
+
+    // Dynamically reallocate memory to true array sizes
+    // Using realloc with updated (reduced) training length effectively trims the extra data
+    data->X_train = realloc(data->X_train, data->train_length * data->num_features * sizeof(double));
+    data->X_valid = realloc(data->X_valid, data->valid_length * data->num_features * sizeof(double));
+    data->y_train = realloc(data->y_train, data->train_length * sizeof(double));
+    data->y_valid = realloc(data->y_valid, data->valid_length * sizeof(double));
 }
 
 // Shuffle random entries to "generate" a training batch of specified size
@@ -297,7 +386,7 @@ void shuffle_batch(struct Dataset *data, int batch_size)
     }
 }
 
-// Computes Mean Squared Error (MSE) between predicted and actual values.
+// Computes Mean Squared Error (MSE) between predicted and actual values
 double mean_squared_error(double *y_actual, double *y_pred, int num_predictions)
 {
     // Sum of absolute error squared
