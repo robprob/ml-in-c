@@ -55,6 +55,13 @@ The library supports both **static** and **shared** compilation, with both optio
   ```c
   void train_test_split(struct Dataset *data, double test_proportion);
   ```
+  
+### **validation_split**
+- **Description**: Further split training set into a training and validation set.
+- **Prototype**:
+  ```c
+  void validation_split(struct Dataset *data, double valid_proportion);
+  ```
 
 ### **shuffle_batch**
 - **Description**: Shuffle random entries to "generate" a training batch of specified size.
@@ -90,12 +97,13 @@ The library supports both **static** and **shared** compilation, with both optio
    git clone https://github.com/robprob/ml-in-c.git
    cd ml-in-c/mlper
 
-   // Compile using Makefile (requires a C compiler)
+   // Build executable (requires a C compiler)
    make
 
    // Optional Installation
    make install
    ```
-
-
-
+## **Include MLper Header in Your Program**
+  ```c
+  #include "mlper.h"
+  ```
