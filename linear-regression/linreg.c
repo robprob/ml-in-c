@@ -17,6 +17,7 @@ E = (1/2) * Σ(i=1)^n (yi - ^yi)^2
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "mlper.h"
 
@@ -24,7 +25,6 @@ E = (1/2) * Σ(i=1)^n (yi - ^yi)^2
 struct LinearRegression {
     int num_epochs;            // Number of training iterations
     double learning_rate;      // Training "step" size
-    double test_proportion;    // Proportion of training data held in test set
     int early_stopping;        // Truth value of early stopping
     int batch_size;            // Number of samples taken per epoch (leave at 0 for batch GD)
     double l2_alpha;           // Ridge coefficient
@@ -56,7 +56,7 @@ int main(int argc, char **argv)
     printf("Standardized: %i\n", data.standardized);
     printf("Number of Epochs: %i\n", linreg.num_epochs);
     printf("Learning Rate: %g\n", linreg.learning_rate);
-    printf("Test Proportion: %g\n", linreg.test_proportion);
+    printf("Test Proportion: %g\n", data.test_proportion);
     printf("Early Stopping: %i\n", linreg.early_stopping);
     printf("Batch Size: %i\n", linreg.batch_size);
     printf("L2 alpha: %g\n", linreg.l2_alpha);
@@ -68,7 +68,7 @@ int main(int argc, char **argv)
     load(&data);
 
     // Split data into training and test arrays
-    train_test_split(&data, linreg.test_proportion);
+    train_test_split(&data, data.test_proportion);
 
     // If specified, standardize feature arrays to mean of 0, standard deviation of 1
     if (data.standardized)
@@ -155,84 +155,74 @@ void parse_config(struct Dataset *data, struct LinearRegression *linreg)
     }
 
     // Line reading buffer
-    char line[128];
-    int line_num = 1;
+    char line[256];
 
     while (fgets(line, sizeof(line), file))
     {
+        char key [128];
         char value[128];
-        sscanf(line, "%*[^=]=%s", value);
 
-        switch (line_num++)
+        // Skip headers and blank lines
+        if (line[0] == '[' || line[0] == '\n')
         {
-            case 1:
+            continue;
+        }
+
+        if (sscanf(line, "%[^=]=%s", key, value) == 2)
+        {
+            if (strcmp(key, "file_path ") == 0)
+            {
                 strcpy(data->file_path, value);
-                break;
-            case 2:
-                if (strcmp(value, "true") == 0)
-                {
-                    data->standardized = 1;
-                }
-                else if (strcmp(value, "false") == 0)
-                {
-                    data->standardized = 0;
-                }
-                else
-                {
-                    printf("Standardized options: 'true' or 'false'\n");
-                }
-                break;
-            case 3:
+            }
+            else if (strcmp(key, "standardize ") == 0)
+            {
+                data->standardized = strcmp(value, "true") == 0 ? 1 : 0;
+            }
+            else if (strcmp(key, "num_epochs ") == 0)
+            {
                 linreg->num_epochs = atoi(value);
-                break;
-            case 4:
+            }
+            else if (strcmp(key, "learning_rate ") == 0)
+            {
                 linreg->learning_rate = atof(value);
-                break;
-            case 5:
-                linreg->test_proportion = atof(value);
-                break;
-            case 6:
-                if (strcmp(value, "true") == 0)
-                {
-                    linreg->early_stopping = 1;
-                }
-                else if (strcmp(value, "false") == 0)
-                {
-                    linreg->early_stopping = 0;
-                }
-                else
-                {
-                    printf("Early Stopping options: 'true' or 'false'\n");
-                }
-                break;
-            case 7:
-                if (strcmp(value, "batch") == 0)
-                {
-                    linreg->gradient_descent = 0;
-                }
-                else if (strcmp(value, "stochastic") == 0)
-                {
-                    linreg->gradient_descent = 1;
-                }
-                else
-                {
-                    printf("Gradient Descent options: 'batch' or 'stochastic' (enter stochastic and batch size for mini-batch)\n");
-                }
-                break;
-            case 8:
+            }
+            else if (strcmp(key, "test_proportion ") == 0)
+            {
+                data->test_proportion = atof(value);
+            }
+            else if (strcmp(key, "early_stopping ") == 0)
+            {
+                linreg->early_stopping = strcmp(value, "true") == 0 ? 1 : 0;
+            }
+            else if (strcmp(key, "batch_size ") == 0)
+            {
+                linreg->batch_size = atoi(value);
+            }
+            else if (strcmp(key, "l2_alpha ") == 0)
+            {
                 linreg->l2_alpha = atof(value);
-                break;
-            case 9:
+            }
+            else if (strcmp(key, "l1_alpha ") == 0)
+            {
                 linreg->l1_alpha = atof(value);
-                break;
-            case 10:
+            }
+            else if (strcmp(key, "mix_ratio ") == 0)
+            {
                 linreg->mix_ratio = atof(value);
-                break;
-            case 11:
-                printf("Too many configuration keys\n");
+            }
+            else
+            {
+                printf("Invalid config key, %s\n", key);
                 exit(EXIT_FAILURE);
+            }
+        }
+        else
+        {
+            printf("Invalid config line: %s\n", line);
+            exit(EXIT_FAILURE);
         }
     }
+
     fclose(file);
 }
 
@@ -279,7 +269,7 @@ void fit_model(struct LinearRegression *linreg, struct Dataset *data)
     {
         train_length = batch_size;
     }
-  
+
     // Iterate epochs
     for (int epoch = 0; epoch <= num_epochs; epoch++)
     {
