@@ -57,6 +57,7 @@ int main(int argc, char **argv)
     printf("Number of Epochs: %i\n", linreg.num_epochs);
     printf("Learning Rate: %g\n", linreg.learning_rate);
     printf("Test Proportion: %g\n", data.test_proportion);
+    printf("Validation Proportion: %g\n", data.valid_proportion);
     printf("Early Stopping: %i\n", linreg.early_stopping);
     printf("Batch Size: %i\n", linreg.batch_size);
     printf("L2 alpha: %g\n", linreg.l2_alpha);
@@ -69,12 +70,16 @@ int main(int argc, char **argv)
 
     // Split data into training and test arrays
     train_test_split(&data, data.test_proportion);
-
     // If specified, standardize feature arrays to mean of 0, standard deviation of 1
-    if (data.standardized)
-    {
-        standardize(&data);
-    }
+    standardize(&data);
+    // Further split training data into validation set, if specified
+    validation_split(&data, data.valid_proportion);
+
+
+    // Print size of each data set
+    printf("Training Size: %i\n", data.train_length);
+    printf("Validation Size: %i\n", data.valid_length);
+    printf("Test Size: %i\n\n", data.test_length);
 
     // Initialize weight vector and bias at 0 (horizontal line)
     linreg.w = calloc(data.num_features, sizeof(double));
@@ -190,6 +195,10 @@ void parse_config(struct Dataset *data, struct LinearRegression *linreg)
             {
                 data->test_proportion = atof(value);
             }
+            else if (strcmp(key, "valid_proportion ") == 0)
+            {
+                data->valid_proportion = atof(value);
+            }
             else if (strcmp(key, "early_stopping ") == 0)
             {
                 linreg->early_stopping = strcmp(value, "true") == 0 ? 1 : 0;
@@ -246,9 +255,11 @@ void fit_model(struct LinearRegression *linreg, struct Dataset *data)
 
     // If necessary, implement test MSE evaluation for early stopping
     int early_stopping = linreg->early_stopping;
-    double test_MSE = 0.0;
-    double prev_test_MSE = 0.0;
-    double sensitivity = 0.0001; // Minimum acceptable decrease in MSE
+    double valid_MSE = 0.0;
+    double prev_valid_MSE = -1.0;
+    double sensitivity = 0.005; // Minimum acceptable decrease in MSE
+    int patience = 2;
+    int patience_counter = 0;
 
     // Gradient accumulation array
     double *w_sums = calloc(num_features, sizeof(double));
@@ -269,6 +280,11 @@ void fit_model(struct LinearRegression *linreg, struct Dataset *data)
     {
         train_length = batch_size;
     }
+
+    // Print terminal log header
+    printf("==========================================\n");
+    printf("| Epoch |   Train MSE   | Validation MSE |\n");
+    printf("==========================================\n");
 
     // Iterate epochs
     for (int epoch = 0; epoch <= num_epochs; epoch++)
@@ -359,38 +375,47 @@ void fit_model(struct LinearRegression *linreg, struct Dataset *data)
             }
             linreg->b = b;
 
-            // Make predictions and calculate MSE
+            // Make predictions and calculate training MSE
             predict(linreg, data, data->X_train, data->train_length);
             double MSE = mean_squared_error(data->y_train, data->y_pred, data->train_length);
-            printf("Epoch %d: Train MSE: %f\n", epoch, MSE);
+            printf("| %5d | %13.5f |", epoch, MSE);
 
-
-            // Evaluate test MSE
-            predict(linreg, data, data->X_test, data->test_length);
-            test_MSE = mean_squared_error(data->y_test, data->y_pred, data->test_length);
-
-            // Evaluate for selection of early stopping
-            if (!early_stopping)
+            // Evaluate for validation set/early stopping
+            if (data->valid_proportion == 0.0 || !early_stopping)
             {
+                printf("       N/A      |\n");
                 continue;
             }
+
+            // Make predictions and calculate validation MSE
+            predict(linreg, data, data->X_valid, data->valid_length);
+            valid_MSE = mean_squared_error(data->y_valid, data->y_pred, data->valid_length);
+            printf(" %14.5f |\n", valid_MSE);
 
             // If applicable, set as initial error and continue
-            if (prev_test_MSE == 0.0)
+            if (prev_valid_MSE == -1.0)
             {
-                prev_test_MSE = MSE;
+                prev_valid_MSE = valid_MSE;
                 continue;
             }
 
-            // Compare difference to consider early stopping
-            double diff = test_MSE - prev_test_MSE;
-            if (diff > 0.0 || diff > (sensitivity * -1))
+            // Evaluate MSE difference and current patience counter to consider early stopping
+            if (valid_MSE >= prev_valid_MSE || (prev_valid_MSE - valid_MSE) < sensitivity)
             {
-                printf("Stopping early, validation set has reached a minimum error.\n");
-                free(w_sums);
-                return;
+                patience_counter++;
+                if (patience_counter >= patience) {
+                    // Print footer of terminal log and exit early
+                    printf("------------------------------------------\n");
+                    printf("Stopping early, validation set has reached a minimum error.\n");
+                    free(w_sums);
+                    return;
+                }
             }
-            prev_test_MSE = test_MSE;
+            else
+            {
+                patience_counter = 0;
+            }
+            prev_valid_MSE = valid_MSE;
         }
     }
 
@@ -400,6 +425,9 @@ void fit_model(struct LinearRegression *linreg, struct Dataset *data)
         linreg->w[j] = w[j];
     }
     linreg->b = b;
+
+    // Print footer of terminal log
+    printf("------------------------------------------\n");
 
     // Free gradient accumulator array
     free(w_sums);
