@@ -12,7 +12,7 @@
 ---
 # Features
 ## Models
-- [Linear Regression](https://github.com/robprob/ml-in-c/tree/main/linear-regression)
+- [Linear and Polynomial Regression](https://github.com/robprob/ml-in-c/tree/main/linear-regression)
 ## ML Helper Library
 - Algorithm-agnostic helper functions
 - [MLper](https://github.com/robprob/ml-in-c/tree/main/mlper)
@@ -29,7 +29,6 @@
 - Improve readability and visual appeal of terminal output
 
 ## Future Models
-- Polynomial Regression
 - Logistic Regression
 - GLMs
 - K-Means Clustering
