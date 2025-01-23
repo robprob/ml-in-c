@@ -7,18 +7,52 @@ The library supports both **static** and **shared** compilation, with both optio
 ---
 ## **Features**
 - **Dynamic Memory Management**: Automates the allocation and deallocation of memory for machine learning datasets.
-- **Data Preprocessing**: Includes functions for standardizing data and splitting datasets into training and test sets.
+- **Feature Transformation**: Generate additional polynomial features from existing linear feature matrix.
+- **Data Preprocessing**: Includes functions for standardizing data and splitting datasets into training, validation, and test sets.
 - **Performance Metrics**: Computes evaluation metrics like Mean Squared Error (MSE).
 - **CSV Utilities**: Handles loading data from CSV files and exporting results to CSV.
 
 ---
-## **Functions**
+
+## **dataset.h**
+
+### **Dataset Struct**
+  ```c
+  struct Dataset {
+      char file_path[128];     // Path to CSV file
+      int standardized;        // Standardization truth value
+      double *feature_means;   // Mean of each input feature
+      double *feature_stds;    // Standard deviation of each input feature
+      double *X;               // Feature matrix
+      double *y;               // Target array
+      double *X_train;         // Training feature set
+      double *X_valid;         // Validation feature set
+      double *X_test;          // Test feature set
+      double *y_train;         // Training targets
+      double *y_valid;         // Validation targets
+      double *y_test;          // Test targets
+      double *y_pred;          // Model Predictions
+      int num_features;        // Number of features
+      int num_entries;         // Number of entries
+      double test_proportion;  // Proportion of training data held in test set
+      double valid_proportion; // Proportion of training set split into validation set
+      int train_length;        // Number of training entries
+      int valid_length;        // Number of validation entries
+      int test_length;         // Number of test entries
+  };
+  ```
 
 ### **initialize_dataset**
-- **Description**: Allocates dynamic memory for feature and target variable arrays.
+- **Description**: Dynamically initialize memory for feature matrix and target array to 0.
 - **Prototype**:
   ```c
   void initialize_dataset(struct Dataset *data, int num_features, int num_entries)
+  ```
+### **initialize_splits**
+- **Description**: Dynamically initialize memory for training and test splits to 0.
+- **Prototype**:
+  ```c
+  void initialize_splits(struct Dataset *data, int num_features, int num_entries)
   ```
 
 ### **free_dataset**
@@ -27,28 +61,7 @@ The library supports both **static** and **shared** compilation, with both optio
   ```c
   void free_dataset(struct Dataset *data);
   ```
-
-### **load**
-- **Description**: Loads a CSV file into feature (X) and target (y) arrays.
-- **Prototype**:
-  ```c
-  void load(struct Dataset *data);
-  ```
-
-### **standardize**
-- **Description**: Standardize feature data to mean of 0, standard deviation of 1, using training data statistics.
-- **Prototype**:
-  ```c
-  void standardize(struct Dataset *data);
-  ```
-
-### **unstandardize**
-- **Description**: Un-standardize specified feature data matrix back to original values.
-- **Prototype**:
-  ```c
-  void unstandardize(struct Dataset *data, double *feature_data, int num_entries);
-  ```
-
+  
 ### **train_test_split**
 - **Description**: Splits data into training and test sets based on a given test proportion.
 - **Prototype**:
@@ -64,17 +77,21 @@ The library supports both **static** and **shared** compilation, with both optio
   ```
 
 ### **shuffle_batch**
-- **Description**: Shuffle random entries to "generate" a training batch of specified size.
+- **Description**: Shuffles random entries to "generate" a training batch of specified size.
 - **Prototype**:
   ```c
   void shuffle_batch(struct Dataset *data, int batch_size);
   ```
+  
+---
 
-### **mean_squared_error**
-- **Description**: Computes the Mean Squared Error (MSE) between predicted and actual values.
+## **fileio.h**
+
+### **load**
+- **Description**: Loads a CSV file into feature (X) and target (y) arrays.
 - **Prototype**:
   ```c
-  double mean_squared_error(double *y_actual, double *y_pred, int num_predictions);
+  void load(struct Dataset *data);
   ```
 
 ### **export_predictions**
@@ -90,7 +107,59 @@ The library supports both **static** and **shared** compilation, with both optio
   ```c
   void export_results(struct Dataset *data, int num_predictions, char *file_name);
   ```
+
 ---
+
+## **preprocessing.h**
+
+### **standardize**
+- **Description**: Standardize feature data to mean of 0, standard deviation of 1, using training data statistics.
+- **Prototype**:
+  ```c
+  void standardize(struct Dataset *data);
+  ```
+
+### **unstandardize**
+- **Description**: Un-standardize specified feature data matrix back to original values.
+- **Prototype**:
+  ```c
+  void unstandardize(struct Dataset *data, double *feature_data, int num_entries);
+  ```
+
+### **poly_transform**
+- **Description**: Transforms input feature matrix into polynomial feature matrix of specified maximum degree.
+- **Prototype**:
+  ```c
+  void poly_transform(struct Dataset *data, int degree);
+  ```
+
+---
+
+## **metrics.h**
+
+### **double_pow**
+- **Description**: Computes specified power of a double as a lightweight alternative to Math.pow.
+- **Prototype**:
+  ```c
+  double double_pow(double base, int pow);
+  ```
+
+### **mean_squared_error**
+- **Description**: Computes the Mean Squared Error (MSE) between predicted and actual values.
+- **Prototype**:
+  ```c
+  double mean_squared_error(double *y_actual, double *y_pred, int num_predictions);
+  ```
+
+### **gradient_regularization**
+- **Description**: Computes total regularization gradient penalty.
+- **Prototype**:
+  ```c
+  double gradient_regularization(double weight, int train_length, double l2_alpha, double l1_alpha, double r);
+  ```
+
+---
+
 ## **How to Clone/Install**
    ```bash
    // Clone repo and move to mlper directory
