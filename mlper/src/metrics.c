@@ -1,8 +1,8 @@
 // Computes specified power of a double as a lightweight alternative to Math.pow
 double double_pow(double base, int pow)
 {
-    double result = base;
-    for (int i = 1; i <= pow; i++)
+    double result = 1.0;
+    for (int i = 0; i < pow; i++)
     {
         result *= base;
     }
