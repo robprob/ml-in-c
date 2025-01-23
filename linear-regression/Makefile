@@ -1,15 +1,15 @@
 # Compiler
-CC = clang
+CC = cc
 
 # Flags
-CFLAGS = -Wall -g -I../mlper
-LDFLAGS = -lm
+CFLAGS = -Wall -g -I../mlper/include
+LDFLAGS = ../mlper/libmlper.a -lm
 
 # Targets
 TARGET = linreg
 
 # Source file
-SRCS = linreg.c ../mlper/mlper.c
+SRCS = linreg.c
 
 # Object file
 OBJS = $(SRCS:.c=.o)

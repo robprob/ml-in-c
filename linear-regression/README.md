@@ -1,5 +1,5 @@
-# Linear Regression
-Implementation of Linear Regression using gradient descent, with support for fine-tuning and regularization.
+# Linear and Polynomial Regression
+Implementation of both linear regression and polynomial regression using gradient descent and regularization techniques.
 
 ---
 ## Features
@@ -11,6 +11,7 @@ Implementation of Linear Regression using gradient descent, with support for fin
 
 ### Tuning
 - Customizable number of epochs and learning rate
+- Automated polynomial transformation/feature generation
 - Regularization: L2 (Ridge), L1 (Lasso), and Elastic Net with mix-ratio, r
 - Early stopping when validation set has reached a minimum error, inhibiting variance via overfitting
 
@@ -40,6 +41,7 @@ Implementation of Linear Regression using gradient descent, with support for fin
 ```ini
 [Dataset]
 file_path = ../sample-data/linear_multi_var_10000.csv
+polynomial_degree = 1
 standardize = true
 test_proportion = 0.2
 valid_proportion = 0.1
@@ -58,30 +60,31 @@ early_stopping = true
 
 ## Command Log Output
 ```plaintext
-Training Size: 7008
-Validation Size: 1027
-Test Size: 1965
+Training Size: 7047
+Validation Size: 1025
+Test Size: 1928
 
 ==========================================
 | Epoch |   Train MSE   | Validation MSE |
 ==========================================
-|     0 |    3215.50643 |     3138.19979 |
-|   100 |      64.91487 |       65.77240 |
-|   200 |       9.87927 |       10.15291 |
-|   300 |       8.91455 |        8.93430 |
-|   400 |       8.89755 |        8.88098 |
-|   500 |       8.89724 |        8.87584 |
-|   600 |       8.89723 |        8.87520 |
-|   700 |       8.89723 |        8.87511 |
+|     0 |    3213.82519 |     3174.79799 |
+|   100 |      65.29408 |       65.71564 |
+|   200 |       9.93109 |       10.18250 |
+|   300 |       8.95499 |        9.08346 |
+|   400 |       8.93770 |        9.04767 |
+|   500 |       8.93739 |        9.04482 |
+|   600 |       8.93738 |        9.04447 |
 ------------------------------------------
 Stopping early, validation set has reached a minimum error.
 
-Trained Model Parameters (un-standardized)
-Weights: 7.01052, 6.0026, 0.205286, -3.98885
-Bias: 3.87475
+Weights:
+Feature 1:  x^1:  7.015
+Feature 2:  x^1:  6.006
+Feature 3:  x^1:  0.208
+Feature 4:  x^1: -4.004
 
-Test MSE: 8.828893
-Training Time: 0.167617 seconds
+Bias: 3.898
+
+Test MSE: 8.589657
+Training Time: 0.142319 seconds
 ```
-
-

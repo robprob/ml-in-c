@@ -1,7 +1,5 @@
-#ifndef MLPER_H
-#define MLPER_H
-
-#include <stdio.h>
+#ifndef DATASET_H
+#define DATASET_H
 
 struct Dataset {
     char file_path[128];     // Path to CSV file
@@ -26,17 +24,16 @@ struct Dataset {
     int test_length;         // Number of test entries
 };
 
-// Function prototypes
+// Memory management
 void initialize_dataset(struct Dataset *data, int num_features, int num_entries);
+void initialize_splits(struct Dataset *data, int num_features, int num_entries);
 void free_dataset(struct Dataset *data);
-void load(struct Dataset *data);
-void standardize(struct Dataset *data);
-void unstandardize(struct Dataset *data, double *feature_data, int num_entries);
+
+// Dataset splitting
 void train_test_split(struct Dataset *data, double test_proportion);
 void validation_split(struct Dataset *data, double valid_proportion);
+
+// Generate stochastic batches
 void shuffle_batch(struct Dataset *data, int batch_size);
-double mean_squared_error(double *y_actual, double *y_pred, int num_predictions);
-void export_predictions(double *y_pred, int num_predictions, char *file_name);
-void export_results(struct Dataset *data, int num_predictions, char *file_name);
 
 #endif

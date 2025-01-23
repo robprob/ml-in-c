@@ -1,3 +1,17 @@
+## v0.2.0 (2025-01-22)
+### Added
+- Support for **Polynomial Regression**, implementing a "poly_transform" function in MLper and a polynomial_degree option in config.txt
+- MLper function **double_pow**, a lightweight alternative to Math.pow for positive-integer powers
+### Changed
+- **Refactored entire MLper library** into modular units, aligning with more conventional practices of C libraries while improving reusability and extensibility
+- Linked MLper to linreg.c as a **static library** instead of recompiling each time
+- Moved initializing of memory for train/test splits into a separate MLper function, **initialize_splits**, allowing it to be dynamically allocated AFTER feature transformation (free_dataset still frees all splits)
+- Improved printing of model parameters, specifying polynomial degree of each feature
+- Improved header of MLper function, export_results, specifying polynomial degree of each feature
+- Various wording changes to improve clarity
+
+---
+
 ## v0.1.1 (2025-01-21)
 ### Added
 - MLper **validation_split**, allowing further split of training data into training and validation set
