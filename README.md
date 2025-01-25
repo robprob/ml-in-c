@@ -24,6 +24,7 @@
 ## TODO
 - Provide more detailed help for model configuration, e.g. recommending early stopping is disabled for SGD
 - Add additional pre-processing/analysis utility to MLper library
+- Add a guide for utilizing sample generation scripts
 
 ## Future Models
 - Logistic Regression
