@@ -1,3 +1,18 @@
+## v0.2.1 (2025-01-24)
+### Added
+- After training, test **RMSE** is printed alongside MSE
+### Changed
+- Changed all instances of **"num_entries" to "num_samples"**
+- **Improved sample data generation**, allowing command-line input and allowing randomized polynomial feature generation
+- **Improved Python example** by using scikit-learn to properly represent training efficiency
+- **Improved CPU time measurements**, including both training and total program CPU time
+### Fixed
+- **Bias now properly calculated** for polynomial features, using original feature mean/standard deviation before polynomial transformation
+### Removed
+- **Static seeding** of data generation
+
+---
+
 ## v0.2.0 (2025-01-22)
 ### Added
 - Support for **Polynomial Regression**, implementing a "poly_transform" function in MLper and a polynomial_degree option in config.txt

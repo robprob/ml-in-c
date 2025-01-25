@@ -23,10 +23,8 @@
 ---
 ## TODO
 - Provide more detailed help for model configuration, e.g. recommending early stopping is disabled for SGD
-- Refactor linreg.c into modular functions (As more models are developed, shift additional utilities to Mlper)
-- Improve sample data generation and allow command-line interaction
 - Add additional pre-processing/analysis utility to MLper library
-- Improve readability and visual appeal of terminal output
+- Add a guide for utilizing sample generation scripts
 
 ## Future Models
 - Logistic Regression

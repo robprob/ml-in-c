@@ -17,6 +17,7 @@ E = (1/2) * Σ(i=1)^n (yi - ^yi)^2
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
+#include <math.h>
 
 #include "mlper.h"
 
@@ -43,6 +44,10 @@ void predict(struct LinearRegression *linreg, struct Dataset *data, double *X_pr
 
 int main(int argc, char **argv)
 {
+    clock_t start, end;
+
+    start = clock();
+
     // Instantiate dataset at 0
     struct Dataset data = {0};
     // Instantiate Linear Regression model at 0
@@ -71,7 +76,7 @@ int main(int argc, char **argv)
     // Transform feature matrix to specified highest degree
     poly_transform(&data, linreg.polynomial_degree);
     // Dynamically allocate memory for train/test splits based on any feature transformation
-    initialize_splits(&data, data.num_features, data.num_entries);
+    initialize_splits(&data, data.num_features, data.num_samples);
     // Split data into training and test sets
     train_test_split(&data, data.test_proportion);
     // If specified, standardize feature arrays to mean of 0, standard deviation of 1
@@ -87,14 +92,14 @@ int main(int argc, char **argv)
     // Initialize memory for model parameters at 0
     initialize_model(&linreg, data.num_features);
 
-    clock_t start, end;
+    clock_t train_start, train_end;
 
-    start = clock();
+    train_start = clock();
 
     // Fit model to training data
     fit_model(&linreg, &data);
 
-    end = clock();
+    train_end = clock();
 
     // Print trained model parameters, un-standardized if necessary
     print_model_parameters(&linreg, &data);
@@ -102,13 +107,14 @@ int main(int argc, char **argv)
     // Generate predictions using trained model
     predict(&linreg, &data, data.X_test, data.test_length);
 
-    // Calculate Mean Squared Error
+    // Calculate Mean Squared Error and RMSE
     double mse = mean_squared_error(data.y_test, data.y_pred, data.test_length);
     printf("\nTest MSE: %f\n", mse);
+    printf("Test RMSE: %f\n", sqrt(mse));
 
     // Calculate and print model training time
-    double cpu_time = ((double) (end - start)) / CLOCKS_PER_SEC;
-    printf("Training Time: %f seconds\n", cpu_time);
+    double training_time = ((double) (train_end - train_start)) / CLOCKS_PER_SEC;
+    printf("\nTraining Time: %f seconds\n", training_time);
 
     // Export feature data and calculated predictions
     export_results(&data, data.test_length, linreg.polynomial_degree, "test_predictions.csv");
@@ -117,6 +123,10 @@ int main(int argc, char **argv)
     free_dataset(&data);
     // Free parameter weights array
     free(linreg.w);
+
+    end = clock();
+    double total_time = ((double) (end - start)) / CLOCKS_PER_SEC;
+    printf("Total CPU Time: %f seconds\n", total_time);
 }
 
 // Parse data file path and model hyperparameter from config file
@@ -278,16 +288,16 @@ void fit_model(struct LinearRegression *linreg, struct Dataset *data)
         // Generate smaller batch, if necessary
         if (batch_size != 0)
         {
-            // "Generate" a random batch by swapping training entries
+            // "Generate" a random batch by swapping training samples
             shuffle_batch(data, batch_size);
         }
 
         // Reset gradient accumulators
         memset(w_sums, 0, num_features * sizeof(double));
-        double b_sum = 0;
+        double b_sum = 0.0;
 
         // Iterate training data, accumulating gradients
-        for (int i = 0; i < train_length; i++) // "i" loops iterate training entries
+        for (int i = 0; i < train_length; i++) // "i" loops iterate training samples
         {
             // Make a prediction, y-hat
             double y_pred = b;
@@ -399,15 +409,17 @@ void fit_model(struct LinearRegression *linreg, struct Dataset *data)
 // Print trained weight and bias parameters, un-standardized if necessary
 void print_model_parameters(struct LinearRegression *linreg, struct Dataset *data)
 {
-    int og_num_features = data->num_features / linreg->polynomial_degree;
+    int num_features = data->num_features;
+    int polynomial_degree = linreg->polynomial_degree;
+    int og_num_features = num_features / polynomial_degree;
 
     printf("\nWeights:\n");
     for (int j = 0; j < og_num_features; j++)
     {
-        printf("Feature %d: ",j + 1);
-        for (int d = 1; d <= linreg->polynomial_degree; d++)
+        printf("    Feature %3d: ",j + 1);
+        for (int d = 1; d <= polynomial_degree; d++)
         {
-            int weight_index = (j * linreg->polynomial_degree) + (d - 1);
+            int weight_index = (j * polynomial_degree) + (d - 1);
             // Un-standardize model weight, if necessary
             double weight = linreg->w[weight_index];
             if (data->standardized)
@@ -417,7 +429,7 @@ void print_model_parameters(struct LinearRegression *linreg, struct Dataset *dat
 
             // Print weight
             printf(" x^%d: %6.3f", d, weight);
-            if (d != linreg->polynomial_degree)
+            if (d != polynomial_degree)
             {
                 printf(", ");
             }
@@ -428,15 +440,21 @@ void print_model_parameters(struct LinearRegression *linreg, struct Dataset *dat
         }
 
     }
-    printf("\n");
 
     // Un-standardize bias, if necessary
     double bias = linreg->b;
     if (data->standardized)
     {
-        for (int j = 0; j < data->num_features; j++)
+        for (int j = 0; j < og_num_features; j++)
         {
-            bias -= (linreg->w[j] * data->feature_means[j]) / data->feature_stds[j];
+            // Parse original data mean and standard deviation
+            double feature_mean = data->feature_means[j * polynomial_degree];
+            double feature_std = data->feature_stds[j * polynomial_degree];
+            for (int d = 1; d <= polynomial_degree; d++)
+            {
+                int weight_index = (j * polynomial_degree) + (d - 1);
+                bias -= (linreg->w[weight_index] * feature_mean) / feature_std;
+            }
         }
     }
     printf("Bias: %.3f\n", bias);

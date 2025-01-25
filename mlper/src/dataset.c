@@ -6,10 +6,10 @@
 
 
 // Dynamically initialize memory for dataset to 0
-void initialize_dataset(struct Dataset *data, int num_features, int num_entries)
+void initialize_dataset(struct Dataset *data, int num_features, int num_samples)
 {
-    data->X = calloc(num_entries * num_features, sizeof(double));
-    data->y = calloc(num_entries, sizeof(double));
+    data->X = calloc(num_samples * num_features, sizeof(double));
+    data->y = calloc(num_samples, sizeof(double));
 
     if (!data->X || !data->y) {
         printf("Unable to allocate memory for dataset.\n");
@@ -18,12 +18,12 @@ void initialize_dataset(struct Dataset *data, int num_features, int num_entries)
 }
 
 // Dynamically initialize memory for training and test splits to 0
-void initialize_splits(struct Dataset *data, int num_features, int num_entries)
+void initialize_splits(struct Dataset *data, int num_features, int num_samples)
 {
-    data->X_train = calloc(num_entries * num_features, sizeof(double));
-    data->X_test = calloc(num_entries * num_features, sizeof(double));
-    data->y_train = calloc(num_entries, sizeof(double));
-    data->y_test = calloc(num_entries, sizeof(double));
+    data->X_train = calloc(num_samples * num_features, sizeof(double));
+    data->X_test = calloc(num_samples * num_features, sizeof(double));
+    data->y_train = calloc(num_samples, sizeof(double));
+    data->y_test = calloc(num_samples, sizeof(double));
 
     if (!data->X_train || !data->X_test || !data->y_train || !data->y_test) {
         printf("Unable to allocate memory for dataset splits.\n");
@@ -53,7 +53,7 @@ void free_dataset(struct Dataset *data)
 void train_test_split(struct Dataset *data, double test_proportion)
 {
 
-    int num_entries = data->num_entries;
+    int num_samples = data->num_samples;
     int num_features = data->num_features;
 
     int train_length = 0;
@@ -64,7 +64,7 @@ void train_test_split(struct Dataset *data, double test_proportion)
     srand(time(NULL));
 
     // Iterate indices of sample data
-    for (int i = 0; i < num_entries; i++)
+    for (int i = 0; i < num_samples; i++)
     {
         // Generate random number between 0 and 1
         float number = (float) rand() / RAND_MAX;
@@ -177,7 +177,7 @@ void validation_split(struct Dataset *data, double valid_proportion)
     data->y_valid = realloc(data->y_valid, data->valid_length * sizeof(double));
 }
 
-// Shuffle random entries to "generate" a training batch of specified size
+// Shuffle random samples to "generate" a training batch of specified size
 void shuffle_batch(struct Dataset *data, int batch_size)
 {
     int train_length = data->train_length;
@@ -185,7 +185,7 @@ void shuffle_batch(struct Dataset *data, int batch_size)
     double *X_train = data->X_train;
     double *y_train = data->y_train;
 
-    // Swap random training entries into the first i positions of the dataset, where i is batch size
+    // Swap random training samples into the first i positions of the dataset, where i is batch size
     for (int i = 0; i < batch_size; i++)
     {
         // Generate random index in bounds of training set

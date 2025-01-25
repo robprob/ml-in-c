@@ -15,12 +15,12 @@ void poly_transform(struct Dataset *data, int degree)
     }
 
     double *X = data->X;
-    int num_entries = data->num_entries;
+    int num_samples = data->num_samples;
     int num_features = data->num_features;
 
     // Allocate memory for new matrix
     int poly_num_features = num_features * degree;
-    double *X_poly = calloc(num_entries * poly_num_features, sizeof(double));
+    double *X_poly = calloc(num_samples * poly_num_features, sizeof(double));
     if (!X_poly)
     {
         printf("Unable to allocate memory for polynomial features.\n");
@@ -29,7 +29,7 @@ void poly_transform(struct Dataset *data, int degree)
 
     // Generate polynomial feature matrix
     // Layout example: Features = [X1, X2], Degree = 2 -> [X1, X1^2, X2, X2^2]
-    for (int i = 0; i < num_entries; i++)
+    for (int i = 0; i < num_samples; i++)
     {
         int current_col = 0;
         for (int j = 0; j < num_features; j++)
@@ -108,10 +108,10 @@ void standardize(struct Dataset *data)
 }
 
 // Un-standardize specified feature data matrix back to original values
-void unstandardize(struct Dataset *data, double *feature_data, int num_entries)
+void unstandardize(struct Dataset *data, double *feature_data, int num_samples)
 {
-    // Iterate data entries
-    for (int i = 0; i < num_entries; i++)
+    // Iterate data samples
+    for (int i = 0; i < num_samples; i++)
     {
         // Iterate data features
         for (int j = 0; j < data->num_features; j++)

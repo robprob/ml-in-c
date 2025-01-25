@@ -9,7 +9,7 @@
 // Load CSV at specified file path into feature and target variable arrays
 void load(struct Dataset *data)
 {
-    // First file read: determine proper header length, count features/entries
+    // First file read: determine proper header length, count features/samples
     FILE *file = fopen(data->file_path, "r");
     if (!file)
     {
@@ -67,7 +67,7 @@ void load(struct Dataset *data)
     // Exclude target variable from feature count
     data->num_features = num_features - 1;
 
-    // Given feature count, forgivingly over-estimate maximum byte length of data entries
+    // Given feature count, forgivingly over-estimate maximum byte length of data samples
     int max_float_length = 20; // over-estimate 20 character float max
     int max_length = (data->num_features + 1) * (max_float_length + 1); // + 1 accommodates commas, \n, etc.
     char *line = malloc(max_length);
@@ -78,15 +78,15 @@ void load(struct Dataset *data)
         exit(EXIT_FAILURE);
     }
 
-    // Iterate remaining lines in file, counting number of data entries
+    // Iterate remaining lines in file, counting number of data samples
     while (fgets(line, max_length, file) != NULL)
     {
-        data->num_entries++;
+        data->num_samples++;
     }
     fclose(file);
 
     // Dynamically allocate memory for dataset arrays
-    initialize_dataset(data, data->num_features, data->num_entries);
+    initialize_dataset(data, data->num_features, data->num_samples);
 
     // Second file read: copy data into allocated memory
     file = fopen(data->file_path, "r");
