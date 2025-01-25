@@ -17,7 +17,7 @@ Implementation of both linear regression and polynomial regression using gradien
 
 ### Performance Metrics
 - Regularly reports training and validation MSE during training and then final MSE on test set
-- Measures CPU clock time during model training
+- Measures CPU clock time during program execution and model training
 
 ---
 
@@ -40,7 +40,7 @@ Implementation of both linear regression and polynomial regression using gradien
 ### Edit fields in config.txt
 ```ini
 [Dataset]
-file_path = ../sample-data/linear_multi_var_10000.csv
+file_path = ../sample-data/5_features_1_degree_1000_samples.csv
 polynomial_degree = 1
 standardize = true
 test_proportion = 0.2
@@ -60,31 +60,36 @@ early_stopping = true
 
 ## Command Log Output
 ```plaintext
-Training Size: 7047
-Validation Size: 1025
-Test Size: 1928
+Training Size: 723
+Validation Size: 97
+Test Size: 180
 
 ==========================================
 | Epoch |   Train MSE   | Validation MSE |
 ==========================================
-|     0 |    3213.82519 |     3174.79799 |
-|   100 |      65.29408 |       65.71564 |
-|   200 |       9.93109 |       10.18250 |
-|   300 |       8.95499 |        9.08346 |
-|   400 |       8.93770 |        9.04767 |
-|   500 |       8.93739 |        9.04482 |
-|   600 |       8.93738 |        9.04447 |
+|     0 |    2426.65269 |     2274.22015 |
+|    10 |     298.10426 |      282.20441 |
+|    20 |      41.60404 |       40.40776 |
+|    30 |      10.55594 |       11.01081 |
+|    40 |       6.78016 |        7.45742 |
+|    50 |       6.31862 |        7.04114 |
+|    60 |       6.26184 |        6.99835 |
+|    70 |       6.25478 |        6.99652 |
+|    80 |       6.25389 |        6.99768 |
 ------------------------------------------
 Stopping early, validation set has reached a minimum error.
 
 Weights:
-Feature 1:  x^1:  7.015
-Feature 2:  x^1:  6.006
-Feature 3:  x^1:  0.208
-Feature 4:  x^1: -4.004
+    Feature   1:  x^1: -0.810
+    Feature   2:  x^1:  3.460
+    Feature   3:  x^1:  2.782
+    Feature   4:  x^1:  2.500
+    Feature   5:  x^1: -2.749
+Bias: 25.764
 
-Bias: 3.898
+Test MSE: 5.758157
+Test RMSE: 2.399616
 
-Test MSE: 8.589657
-Training Time: 0.142319 seconds
+Training Time: 0.002459 seconds
+Total CPU Time: 0.004423 seconds
 ```
