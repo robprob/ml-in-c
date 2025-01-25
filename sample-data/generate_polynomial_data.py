@@ -1,15 +1,14 @@
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import sys
 
 # Read command-line arguments
 if len(sys.argv) < 4:
-    print("Usage: python generate_polynomial_data.py <num_features> <degree> <num_samples> [<noise_std>]")
+    print("Usage: python generate_polynomial_data.py <num_features> <max_degree> <num_samples> [<noise_std>]")
     sys.exit(1)
 
 num_features = int(sys.argv[1])
-degree = int(sys.argv[2])
+max_degree = int(sys.argv[2])
 num_samples = int(sys.argv[3])
 if len(sys.argv) > 4:
     noise_std = float(sys.argv[4])
@@ -17,18 +16,28 @@ else:
     noise_std = 3.0
 
 # Generate random feature inputs
-np.random.seed(115)
 X = 10 * np.random.rand(num_samples, num_features)
 
-# Generate random coefficients for polynomial features
-coefficients = np.random.uniform(-5, 5, size=(num_features, degree))
+# Generate random feature coefficients
+coefficients = np.random.uniform(-5, 5, size=(num_features,))
 intercept = np.random.uniform(-10, 10)
+# Generate random degrees of each feature
+X_degrees = np.random.randint(1, max_degree + 1, num_features)
+# Ensure max degree reached
+X_degrees[np.argmax(X_degrees)] = max_degree
 
-# Compute the polynomial function
+# Print generated parameters
+print("Generated Parameters")
+for i in range(len(coefficients)):
+    print(f"    Coefficient {i + 1:3d}: {coefficients[i]:6.3f}")
+print(f"    Degrees: {X_degrees}")
+print(f"    Intercept: {intercept}\n")
+
+# Calculate function outputs
 y = np.zeros(num_samples)
-for feature_idx in range(num_features):
-    for d in range(1, degree + 1):
-        y += coefficients[feature_idx, d - 1] * (X[:, feature_idx] ** d)
+for feature in range(num_features):
+    # Factor in degree of coefficient
+    y += coefficients[feature] * (X[:, feature] ** X_degrees[feature])
 
 # Add intercept
 y += intercept
@@ -49,6 +58,6 @@ data = pd.DataFrame(X, columns=columns)
 data['y'] = y
 
 # Save to CSV
-data.to_csv(f'single_poly_{num_features}_features_{degree}_degree_{num_samples}_samples.csv', index=False)
+data.to_csv(f'{num_features}_features_{max_degree}_degree_{num_samples}_samples.csv', index=False)
 
-print(f"Dataset saved as 'single_poly_{num_features}_features_{degree}_degree_{num_samples}_samples.csv'")
+print(f"Dataset saved as '{num_features}_features_{max_degree}_degree_{num_samples}_samples.csv'")
