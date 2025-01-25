@@ -16,17 +16,17 @@ struct Dataset {
     double *y_test;          // Test targets
     double *y_pred;          // Model Predictions
     int num_features;        // Number of features
-    int num_entries;         // Number of entries
+    int num_samples;         // Number of samples
     double test_proportion;  // Proportion of training data held in test set
     double valid_proportion; // Proportion of training set split into validation set
-    int train_length;        // Number of training entries
-    int valid_length;        // Number of validation entries
-    int test_length;         // Number of test entries
+    int train_length;        // Number of training samples
+    int valid_length;        // Number of validation samples
+    int test_length;         // Number of test samples
 };
 
 // Memory management
-void initialize_dataset(struct Dataset *data, int num_features, int num_entries);
-void initialize_splits(struct Dataset *data, int num_features, int num_entries);
+void initialize_dataset(struct Dataset *data, int num_features, int num_samples);
+void initialize_splits(struct Dataset *data, int num_features, int num_samples);
 void free_dataset(struct Dataset *data);
 
 // Dataset splitting
