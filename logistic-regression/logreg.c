@@ -1,16 +1,16 @@
 /*
 Implementation of multi-variable linear regression.
 
-Linear Function
-h(x) = wi * xj + b
+Logistic Function
+h(x) = 1 / (1 + e^-(wi * wj + b))
 
-h(x): linear prediction
+h(x): logistic prediction
 wi: weight vector
 xj: feature vector
 b: bias parameter
 
-Mean Squared Error (MSE) Function
-E = (1/2) * Σ(i=1)^n (yi - ^yi)^2
+Log Loss Function
+E = −(1/N) * Σ[yi * log(h(xi)) + (1 - yi) * log(1 - h(xi))]
 */
 
 #include <stdio.h>
@@ -21,13 +21,13 @@ E = (1/2) * Σ(i=1)^n (yi - ^yi)^2
 
 #include "mlper.h"
 
-struct LinearRegression {
+struct LogisticRegression {
     int num_epochs;            // Number of training iterations
-    int polynomial_degree;     // Highest polynomial degree to generate for Polynomial Regression
+    int polynomial_degree;     // Always 1 for logistic regression
     double learning_rate;      // Training "step" size
     int early_stopping;        // Truth value of early stopping
-    double tolerance;          // Minimum acceptable reduction in MSE
-    int patience;              // Number of "bad" MSE checks required in a row
+    double tolerance;          // Minimum acceptable reduction in loss
+    int patience;              // Number of "bad" loss checks required in a row
     int batch_size;            // Number of samples taken per epoch (leave at 0 for batch GD)
     double l2_alpha;           // Ridge coefficient
     double l1_alpha;           // Lasso coefficient
@@ -37,11 +37,12 @@ struct LinearRegression {
 };
 
 // Function Prototypes
-void parse_config(struct Dataset *data, struct LinearRegression *linreg);
-void initialize_model(struct LinearRegression *linreg, int num_features);
-void fit_model(struct LinearRegression *linreg, struct Dataset *data);
-void print_model_parameters(struct LinearRegression *linreg, struct Dataset *data);
-void predict(struct LinearRegression *linreg, struct Dataset *data, double *X_predict, int num_predictions);
+void parse_config(struct Dataset *data, struct LogisticRegression *logreg);
+void initialize_model(struct LogisticRegression *logreg, int num_features);
+void fit_model(struct LogisticRegression *logreg, struct Dataset *data);
+void print_model_parameters(struct LogisticRegression *logreg, struct Dataset *data);
+void predict_prob(struct LogisticRegression *logreg, struct Dataset *data, double *X_predict, int num_predictions);
+void predict_class(double *y_pred, int num_predictions);
 
 
 int main(int argc, char **argv)
@@ -53,26 +54,26 @@ int main(int argc, char **argv)
     // Instantiate dataset at 0
     struct Dataset data = {0};
     // Instantiate Linear Regression model at 0
-    struct LinearRegression linreg = {0};
+    struct LogisticRegression logreg = {0};
 
     // Parse data path and model hyperparameter from config file
-    parse_config(&data, &linreg);
+    parse_config(&data, &logreg);
 
     /*
     // Print selected parameters
     printf("File Path: %s\n", data.file_path);
     printf("Standardized: %i\n", data.standardized);
-    printf("Number of Epochs: %i\n", linreg.num_epochs);
-    printf("Learning Rate: %g\n", linreg.learning_rate);
+    printf("Number of Epochs: %i\n", logreg.num_epochs);
+    printf("Learning Rate: %g\n", logreg.learning_rate);
     printf("Test Proportion: %g\n", data.test_proportion);
     printf("Validation Proportion: %g\n", data.valid_proportion);
-    printf("Early Stopping: %i\n", linreg.early_stopping);
-    printf("Batch Size: %i\n", linreg.batch_size);
-    printf("L2 alpha: %g\n", linreg.l2_alpha);
-    printf("L1 alpha: %g\n", linreg.l1_alpha);
-    printf("Elastic Net Mix Ratio: %g\n", linreg.mix_ratio);
-    printf("Tolerance: %g\n", linreg.tolerance);
-    printf("Patience %i\n", linreg.patience);
+    printf("Early Stopping: %i\n", logreg.early_stopping);
+    printf("Batch Size: %i\n", logreg.batch_size);
+    printf("L2 alpha: %g\n", logreg.l2_alpha);
+    printf("L1 alpha: %g\n", logreg.l1_alpha);
+    printf("Elastic Net Mix Ratio: %g\n", logreg.mix_ratio);
+    printf("Tolerance: %g\n", logreg.tolerance);
+    printf("Patience %i\n", logreg.patience);
     */
 
 
@@ -80,7 +81,7 @@ int main(int argc, char **argv)
     // Load feature and target variable data into arrays
     load(&data);
     // Transform feature matrix to specified highest degree
-    poly_transform(&data, linreg.polynomial_degree);
+    poly_transform(&data, logreg.polynomial_degree);
     // Dynamically allocate memory for train/test splits based on any feature transformation
     initialize_splits(&data, data.num_features, data.num_samples);
     // Split data into training and test sets
@@ -96,39 +97,53 @@ int main(int argc, char **argv)
     printf("Test Size: %i\n\n", data.test_length);
 
     // Initialize memory for model parameters at 0
-    initialize_model(&linreg, data.num_features);
+    initialize_model(&logreg, data.num_features);
 
     clock_t train_start, train_end;
 
     train_start = clock();
 
     // Fit model to training data
-    fit_model(&linreg, &data);
+    fit_model(&logreg, &data);
 
     train_end = clock();
 
     // Print trained model parameters, un-standardized if necessary
-    print_model_parameters(&linreg, &data);
+    print_model_parameters(&logreg, &data);
 
-    // Generate predictions using trained model
-    predict(&linreg, &data, data.X_test, data.test_length);
+    // Calculate probabilities using trained model
+    predict_prob(&logreg, &data, data.X_test, data.test_length);
+    // Calculate Log Loss of test set
+    double log_loss = average_log_loss(data.y_test, data.y_pred, data.test_length);
+    printf("\nTest Log Loss: %f\n", log_loss);
 
-    // Calculate Mean Squared Error and RMSE
-    double mse = mean_squared_error(data.y_test, data.y_pred, data.test_length);
-    printf("\nTest MSE: %f\n", mse);
-    printf("Test RMSE: %f\n", sqrt(mse));
+    // Calculate class predictions using trained model
+    predict_class(data.y_pred, data.test_length);
+
+    // Calculate Accuracy
+    double acc = accuracy(data.y_test, data.y_pred, data.test_length);
+    printf("Test Accuracy: %f\n\n", acc);
+
+    // Calculate precision, recall, F-1 score
+    double precision = 0;
+    double recall = 0;
+    double f1_score = 0;
+    classification_metrics(data.y_test, data.y_pred, data.test_length, &precision, &recall, &f1_score);
+    printf("Test Precision: %f\n", precision);
+    printf("Test Recall: %f\n", recall);
+    printf("Test F1-Score: %f\n\n", f1_score);
 
     // Calculate and print model training time
     double training_time = ((double) (train_end - train_start)) / CLOCKS_PER_SEC;
-    printf("\nTraining Time: %f seconds\n", training_time);
+    printf("Training Time: %f seconds\n", training_time);
 
     // Export feature data and calculated predictions
-    export_results(&data, data.test_length, linreg.polynomial_degree, "test_predictions.csv");
+    export_results(&data, data.test_length, logreg.polynomial_degree, "test_predictions.csv");
 
     // Free memory taken up by dataset
     free_dataset(&data);
     // Free parameter weights array
-    free(linreg.w);
+    free(logreg.w);
 
     end = clock();
     double total_time = ((double) (end - start)) / CLOCKS_PER_SEC;
@@ -136,7 +151,7 @@ int main(int argc, char **argv)
 }
 
 // Parse data file path and model hyperparameter from config file
-void parse_config(struct Dataset *data, struct LinearRegression *linreg)
+void parse_config(struct Dataset *data, struct LogisticRegression *logreg)
 {
     FILE *file = fopen("config.txt", "r");
     if (!file)
@@ -165,21 +180,17 @@ void parse_config(struct Dataset *data, struct LinearRegression *linreg)
             {
                 strcpy(data->file_path, value);
             }
-            else if (strcmp(key, "polynomial_degree ") == 0)
-            {
-                linreg->polynomial_degree = atoi(value);
-            }
             else if (strcmp(key, "standardize ") == 0)
             {
                 data->standardized = strcmp(value, "true") == 0 ? 1 : 0;
             }
             else if (strcmp(key, "num_epochs ") == 0)
             {
-                linreg->num_epochs = atoi(value);
+                logreg->num_epochs = atoi(value);
             }
             else if (strcmp(key, "learning_rate ") == 0)
             {
-                linreg->learning_rate = atof(value);
+                logreg->learning_rate = atof(value);
             }
             else if (strcmp(key, "test_proportion ") == 0)
             {
@@ -191,31 +202,31 @@ void parse_config(struct Dataset *data, struct LinearRegression *linreg)
             }
             else if (strcmp(key, "early_stopping ") == 0)
             {
-                linreg->early_stopping = strcmp(value, "true") == 0 ? 1 : 0;
+                logreg->early_stopping = strcmp(value, "true") == 0 ? 1 : 0;
             }
             else if (strcmp(key, "batch_size ") == 0)
             {
-                linreg->batch_size = atoi(value);
+                logreg->batch_size = atoi(value);
             }
             else if (strcmp(key, "l2_alpha ") == 0)
             {
-                linreg->l2_alpha = atof(value);
+                logreg->l2_alpha = atof(value);
             }
             else if (strcmp(key, "l1_alpha ") == 0)
             {
-                linreg->l1_alpha = atof(value);
+                logreg->l1_alpha = atof(value);
             }
             else if (strcmp(key, "mix_ratio ") == 0)
             {
-                linreg->mix_ratio = atof(value);
+                logreg->mix_ratio = atof(value);
             }
             else if (strcmp(key, "tolerance ") == 0)
             {
-                linreg->tolerance = atof(value);
+                logreg->tolerance = atof(value);
             }
             else if (strcmp(key, "patience ") == 0)
             {
-                linreg->patience = atoi(value);
+                logreg->patience = atoi(value);
             }
             else
             {
@@ -233,42 +244,44 @@ void parse_config(struct Dataset *data, struct LinearRegression *linreg)
     fclose(file);
 }
 
-// Initialize model paramaters at 0 (horizontal line)
-void initialize_model(struct LinearRegression *linreg, int num_features)
+// Initialize model paramaters at 0
+void initialize_model(struct LogisticRegression *logreg, int num_features)
 {
-    linreg->w = calloc(num_features, sizeof(double));
-    if (!linreg->w)
+    logreg->w = calloc(num_features, sizeof(double));
+    if (!logreg->w)
     {
         printf("Unable to allocate memory for weights.\n");
         exit(EXIT_FAILURE);
     }
-    linreg->b = 0.0;
+    logreg->b = 0.0;
+
+    logreg->polynomial_degree = 1; // Always 1 for logistic regression
 }
 
 // Fit linear regression model to training data
-void fit_model(struct LinearRegression *linreg, struct Dataset *data)
+void fit_model(struct LogisticRegression *logreg, struct Dataset *data)
 {
     // Retrieve dataset counts and model parameters
     int num_features = data->num_features;
     int train_length = data->train_length;
 
-    int num_epochs = linreg->num_epochs;
-    double learning_rate = linreg->learning_rate;
-    int batch_size = linreg->batch_size;
-    double l2_alpha = linreg->l2_alpha;
-    double l1_alpha = linreg->l1_alpha;
-    double r = linreg->mix_ratio;
+    int num_epochs = logreg->num_epochs;
+    double learning_rate = logreg->learning_rate;
+    int batch_size = logreg->batch_size;
+    double l2_alpha = logreg->l2_alpha;
+    double l1_alpha = logreg->l1_alpha;
+    double r = logreg->mix_ratio;
 
     double w[num_features];
-    memcpy(w, linreg->w, num_features * sizeof(double));
-    double b = linreg->b;
+    memcpy(w, logreg->w, num_features * sizeof(double));
+    double b = logreg->b;
 
-    // If necessary, implement test MSE evaluation for early stopping
-    int early_stopping = linreg->early_stopping;
-    double valid_MSE = 0.0;
-    double prev_valid_MSE = -1.0;
-    double tolerance = linreg->tolerance;
-    int patience = linreg->patience;
+    // If necessary, implement validation error for early stopping
+    int early_stopping = logreg->early_stopping;
+    double valid_loss = 0.0;
+    double prev_valid_loss = -1.0;
+    double tolerance = logreg->tolerance;
+    int patience = logreg->patience;
     int patience_counter = 0;
 
     // Gradient accumulation array
@@ -292,9 +305,9 @@ void fit_model(struct LinearRegression *linreg, struct Dataset *data)
     }
 
     // Print terminal log header
-    printf("==========================================\n");
-    printf("| Epoch |   Train MSE   | Validation MSE |\n");
-    printf("==========================================\n");
+    printf("=========================================================\n");
+    printf("| Epoch |  Train Loss  |   Accuracy   | Validation Loss |\n");
+    printf("=========================================================\n");
 
     // Iterate epochs
     for (int epoch = 0; epoch <= num_epochs; epoch++)
@@ -310,90 +323,95 @@ void fit_model(struct LinearRegression *linreg, struct Dataset *data)
         memset(w_sums, 0, num_features * sizeof(double));
         double b_sum = 0.0;
 
+        double total_loss = 0.0;
+        int num_correct = 0;
+
         // Iterate training data, accumulating gradients
         for (int i = 0; i < train_length; i++) // "i" loops iterate training samples
         {
-            // Make a prediction, y-hat
-            double y_pred = b;
+            // Calculate the linear combination, z
+            double z = b;
             // Sum weighted feature contributions
             for (int j = 0; j < num_features; j++)
             {
-                y_pred += w[j] * data->X_train[i * num_features + j];
+                z += w[j] * data->X_train[i * num_features + j];
             }
 
-            // Calculate error
-            double error = data->y_train[i] - y_pred;
+            // Calculate output of sigmoid function
+            double y_pred = sigmoid(z);
 
-            // Accumulate gradients
-            b_sum += error;
+            // Compute log loss
+            double y_true = data->y_train[i];
+            total_loss += log_loss(y_true, y_pred);
+
+            // Accumulate gradient of loss
+            double error = y_pred - y_true;
+
             // For each feature
-            for (int j= 0; j < num_features;j++)
+            for (int j= 0; j < num_features; j++)
             {
                 w_sums[j] += data->X_train[i * num_features + j] * error;
             }
+            b_sum += error;
+
+            // Evaluate if prediction is correct
+            if ((y_pred >= 0.5 && y_true == 1) || (y_pred < 0.5 && y_true == 0))
+            {
+                num_correct++;
+            }
         }
 
-        // Calculate partial derivative of MSE with respect to w
+        // Update weights and bias parameters
         for (int j = 0; j < num_features; j++)
         {
-            // Base derivative of objective function
-            double dE_dw = (-2.0 / train_length) * w_sums[j];
-
-            // Apply regularization gradient
-            dE_dw += gradient_regularization(w[j], train_length, l2_alpha, l1_alpha, r);
-
-            // Update feature weight, compensating for learning rate
-            w[j] -= learning_rate * dE_dw;
+            double regularization = gradient_regularization(w[j], train_length, l2_alpha, l1_alpha, r);
+            w[j] -= learning_rate * ((w_sums[j] / train_length) + regularization);
         }
+        b -= learning_rate * (b_sum / train_length);
 
-        // Calculate partial derivative of MSE with respect to b
-        double dE_db = (-2.0 / train_length) * b_sum;
-        // Update bias parameter, compensating for learning rate
-        b -= learning_rate * dE_db;
+        // Compute average loss
+        total_loss /= train_length;
+        // Compute accuracy
+        double accuracy = (double) num_correct / train_length;
 
         // Print training progress intermittently
         int divisor = (num_epochs / 10 == 0) ? 1 : num_epochs / 10; // Prevent dividing by 0 with small epoch number
         if (epoch % divisor == 0)
         {
-            // Copy weights and bias back to model
-            for (int j = 0; j < num_features; j++)
-            {
-                linreg->w[j] = w[j];
-            }
-            linreg->b = b;
-
-            // Make predictions and calculate training MSE
-            predict(linreg, data, data->X_train, data->train_length);
-            double MSE = mean_squared_error(data->y_train, data->y_pred, data->train_length);
-            printf("| %5d | %13.5f |", epoch, MSE);
-
             // Evaluate for validation set/early stopping
             if (data->valid_proportion == 0.0 || !early_stopping)
             {
-                printf("       N/A      |\n");
+                printf("| %5d | %12.5f | %11.2f%% |", epoch, total_loss, accuracy * 100);
+                printf("       N/A       |\n");
                 continue;
             }
 
-            // Make predictions and calculate validation MSE
-            predict(linreg, data, data->X_valid, data->valid_length);
-            valid_MSE = mean_squared_error(data->y_valid, data->y_pred, data->valid_length);
-            printf(" %14.5f |\n", valid_MSE);
+            // Copy weights and bias parameters back to model
+            // Final weights and bias update
+            memcpy(logreg->w, w, num_features * sizeof(double));
+            logreg->b = b;
+
+            // Calculate probabilities and calculate average loss of validation set
+            predict_prob(logreg, data, data->X_valid, data->valid_length);
+            valid_loss = average_log_loss(data->y_valid, data->y_pred, data->valid_length);
+
+            printf("| %5d | %12.5f | %11.2f%% | %15.5f |\n", epoch, total_loss, accuracy * 100, valid_loss);
 
             // If applicable, set as initial error and continue
-            if (prev_valid_MSE == -1.0)
+            if (prev_valid_loss == -1.0)
             {
-                prev_valid_MSE = valid_MSE;
+                prev_valid_loss = valid_loss;
                 continue;
             }
 
             // Evaluate MSE difference and current patience counter to consider early stopping
-            if (valid_MSE >= prev_valid_MSE || (prev_valid_MSE - valid_MSE) < tolerance)
+            if (valid_loss >= prev_valid_loss || (prev_valid_loss - valid_loss) < tolerance)
             {
                 patience_counter++;
                 if (patience_counter >= patience) {
                     // Print footer of terminal log and exit early
-                    printf("------------------------------------------\n");
-                    printf("Stopping early, validation set has reached a minimum error.\n");
+                    printf("---------------------------------------------------------\n");
+                    printf("Stopping early at epoch %d, validation set has reached a minimum loss.\n", epoch);
                     free(w_sums);
                     return;
                 }
@@ -402,77 +420,59 @@ void fit_model(struct LinearRegression *linreg, struct Dataset *data)
             {
                 patience_counter = 0;
             }
-            prev_valid_MSE = valid_MSE;
+            prev_valid_loss = valid_loss;
         }
     }
 
     // Final weights and bias update
-    memcpy(linreg->w, w, num_features * sizeof(double));
-    linreg->b = b;
+    memcpy(logreg->w, w, num_features * sizeof(double));
+    logreg->b = b;
 
     // Print footer of terminal log
-    printf("------------------------------------------\n");
+    printf("---------------------------------------------------------\n");
 
     // Free gradient accumulator array
     free(w_sums);
 }
 
 // Print trained weight and bias parameters, un-standardized if necessary
-void print_model_parameters(struct LinearRegression *linreg, struct Dataset *data)
+void print_model_parameters(struct LogisticRegression *logreg, struct Dataset *data)
 {
     int num_features = data->num_features;
-    int polynomial_degree = linreg->polynomial_degree;
-    int og_num_features = num_features / polynomial_degree;
 
     printf("\nWeights:\n");
-    for (int j = 0; j < og_num_features; j++)
+    for (int j = 0; j < num_features; j++)
     {
         printf("    Feature %3d: ",j + 1);
-        for (int d = 1; d <= polynomial_degree; d++)
-        {
-            int weight_index = (j * polynomial_degree) + (d - 1);
-            // Un-standardize model weight, if necessary
-            double weight = linreg->w[weight_index];
-            if (data->standardized)
-            {
-                weight /= data->feature_stds[j];
-            }
 
-            // Print weight
-            printf(" x^%d: %6.3f", d, weight);
-            if (d != polynomial_degree)
-            {
-                printf(", ");
-            }
-            else
-            {
-                printf("\n");
-            }
+        // Un-standardize model weight, if necessary
+        double weight = logreg->w[j];
+        if (data->standardized)
+        {
+            weight /= data->feature_stds[j];
         }
 
+        // Print weight
+        printf(" %6.3f\n", weight);
     }
 
     // Un-standardize bias, if necessary
-    double bias = linreg->b;
+    double bias = logreg->b;
     if (data->standardized)
     {
-        for (int j = 0; j < og_num_features; j++)
+        for (int j = 0; j < num_features; j++)
         {
             // Parse original data mean and standard deviation
-            double feature_mean = data->feature_means[j * polynomial_degree];
-            double feature_std = data->feature_stds[j * polynomial_degree];
-            for (int d = 1; d <= polynomial_degree; d++)
-            {
-                int weight_index = (j * polynomial_degree) + (d - 1);
-                bias -= (linreg->w[weight_index] * feature_mean) / feature_std;
-            }
+            double feature_mean = data->feature_means[j];
+            double feature_std = data->feature_stds[j];
+            bias -= (logreg->w[j] * feature_mean) / feature_std;
         }
     }
     printf("Bias: %.3f\n", bias);
 }
 
-// Make predictions using trained linear regression model
-void predict(struct LinearRegression *linreg, struct Dataset *data, double *X_predict, int num_predictions)
+// Make probability predictions using trained logistic regression model
+void predict_prob(struct LogisticRegression *logreg, struct Dataset *data, double *X_predict, int num_predictions)
 {
     int num_features = data->num_features;
 
@@ -484,17 +484,33 @@ void predict(struct LinearRegression *linreg, struct Dataset *data, double *X_pr
         exit(EXIT_FAILURE);
     }
 
-    double b = linreg->b;
+    double b = logreg->b;
 
     // Calculate and store predictions
     for (int i = 0; i < num_predictions; i++)
     {
-        double temp_prediction = b;
+        double z = b;
         // Sum weighted feature contributions
         for (int j = 0; j < num_features; j++)
         {
-            temp_prediction += linreg->w[j] * X_predict[i * num_features + j];
+            z += logreg->w[j] * X_predict[i * num_features + j];
         }
-        data->y_pred[i] = temp_prediction;
+        data->y_pred[i] = sigmoid(z);
+    }
+}
+
+// Convert existing probability predictions into discrete predictions
+void predict_class(double *y_pred, int num_predictions)
+{
+    for (int i = 0; i < num_predictions; i++)
+    {
+        if (y_pred[i] >= 0.5)
+        {
+            y_pred[i] = 1;
+        }
+        else
+        {
+            y_pred[i] = 0;
+        }
     }
 }
