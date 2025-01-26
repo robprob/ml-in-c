@@ -22,7 +22,7 @@
 
 ---
 ## TODO
-- Provide more detailed help for model configuration, e.g. recommending early stopping is disabled for SGD
+- Provide more detailed help for model configuration
 - Add additional pre-processing/analysis utility to MLper library
 - Add a guide for utilizing sample generation scripts
 
