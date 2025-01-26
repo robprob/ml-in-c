@@ -1,15 +1,16 @@
 ## v0.2.2 (2025-01-26)
 ### Added
-- WIP implementation of Logistic Regression
-- Python script to generate logistic data
-- New function, sigmoid, in MLper metrics.c
-- New function, log_loss, in MLper metrics.c
-- New function, average_log_loss, in MLper metrics.c
-- New function, accuracy, in MLper metrics.c
-- New function, classification_metrics, in MLper metrics.c
-- Officially implemented configuration options for both tolerance and patience with respect to gradient descent
+- WIP implementation of **Logistic Regression**
+- Python script to generate **logistic data**
+- New function, **sigmoid**, in MLper metrics.c
+- New function, **log_loss**, in MLper metrics.c
+- New function, **average_log_loss**, in MLper metrics.c
+- New function, **accuracy**, in MLper metrics.c
+- New function, **classification_metrics**, in MLper metrics.c
+- Officially implemented configuration options for both **tolerance and patience** with respect to gradient descent
 ### Changed
-- Started using memcpy to efficiently copy arrays to/from model
+- Started using **memcpy** to efficiently copy arrays to/from model
+- Various wording changes to improve clarity
 
 ---
 
