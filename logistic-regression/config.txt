@@ -1,0 +1,18 @@
+[Dataset]
+file_path = ../sample-data/3_features_0.7_balance_1000_samples.csv
+standardize = true
+test_proportion = 0.2
+valid_proportion = 0.1
+
+[Regularization]
+l2_alpha = 0.0
+l1_alpha = 0.0
+mix_ratio = 0.0
+
+[Training]
+num_epochs = 50
+learning_rate = 0.3
+batch_size = 0
+early_stopping = true
+tolerance = .01
+patience = 1
