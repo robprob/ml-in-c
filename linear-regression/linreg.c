@@ -26,6 +26,8 @@ struct LinearRegression {
     int polynomial_degree;     // Highest polynomial degree to generate for Polynomial Regression
     double learning_rate;      // Training "step" size
     int early_stopping;        // Truth value of early stopping
+    double tolerance;          // Minimum acceptable reduction in MSE
+    int patience;              // Number of "bad" MSE checks required in a row
     int batch_size;            // Number of samples taken per epoch (leave at 0 for batch GD)
     double l2_alpha;           // Ridge coefficient
     double l1_alpha;           // Lasso coefficient
@@ -69,7 +71,11 @@ int main(int argc, char **argv)
     printf("L2 alpha: %g\n", linreg.l2_alpha);
     printf("L1 alpha: %g\n", linreg.l1_alpha);
     printf("Elastic Net Mix Ratio: %g\n", linreg.mix_ratio);
+    printf("Tolerance: %g\n", linreg.tolerance);
+    printf("Patience %i\n", linreg.patience);
     */
+
+
 
     // Load feature and target variable data into arrays
     load(&data);
@@ -203,6 +209,14 @@ void parse_config(struct Dataset *data, struct LinearRegression *linreg)
             {
                 linreg->mix_ratio = atof(value);
             }
+            else if (strcmp(key, "tolerance ") == 0)
+            {
+                linreg->tolerance = atof(value);
+            }
+            else if (strcmp(key, "patience ") == 0)
+            {
+                linreg->patience = atoi(value);
+            }
             else
             {
                 printf("Invalid config key, %s\n", key);
@@ -253,8 +267,8 @@ void fit_model(struct LinearRegression *linreg, struct Dataset *data)
     int early_stopping = linreg->early_stopping;
     double valid_MSE = 0.0;
     double prev_valid_MSE = -1.0;
-    double sensitivity = 0.005; // Minimum acceptable decrease in MSE
-    int patience = 2; // Number of "bad" MSE comparisons required in a row
+    double tolerance = linreg->tolerance;
+    int patience = linreg->patience;
     int patience_counter = 0;
 
     // Gradient accumulation array
@@ -373,7 +387,7 @@ void fit_model(struct LinearRegression *linreg, struct Dataset *data)
             }
 
             // Evaluate MSE difference and current patience counter to consider early stopping
-            if (valid_MSE >= prev_valid_MSE || (prev_valid_MSE - valid_MSE) < sensitivity)
+            if (valid_MSE >= prev_valid_MSE || (prev_valid_MSE - valid_MSE) < tolerance)
             {
                 patience_counter++;
                 if (patience_counter >= patience) {
@@ -393,10 +407,7 @@ void fit_model(struct LinearRegression *linreg, struct Dataset *data)
     }
 
     // Final weights and bias update
-    for (int j = 0; j < num_features; j++)
-    {
-        linreg->w[j] = w[j];
-    }
+    memcpy(linreg->w, w, num_features * sizeof(double));
     linreg->b = b;
 
     // Print footer of terminal log

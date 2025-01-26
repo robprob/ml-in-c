@@ -61,7 +61,7 @@ for weight in linreg.coef_:
     i += 1
 print(f"Bias: {linreg.intercept_}\n")
 
-# Calculate MSE and print model parameters
+# Calculate MSE
 mse = mean_squared_error(y_test, y_pred)
 print(f"Test MSE: {mse}\n")
 
