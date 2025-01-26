@@ -1,10 +1,10 @@
 /*
-Implementation of multi-variable linear regression.
+Implementation of logistic regression.
 
-Logistic Function
+Sigmoid Logistic Function
 h(x) = 1 / (1 + e^-(wi * wj + b))
 
-h(x): logistic prediction
+h(x): probabilistic prediction
 wi: weight vector
 xj: feature vector
 b: bias parameter
