@@ -13,6 +13,7 @@
 # Features
 ## Models
 - [Linear and Polynomial Regression](https://github.com/robprob/ml-in-c/tree/main/linear-regression)
+- [Logistic Regression](https://github.com/robprob/ml-in-c/tree/main/logistic-regression)
 ## ML Helper Library
 - Algorithm-agnostic helper functions
 - [MLper](https://github.com/robprob/ml-in-c/tree/main/mlper)
