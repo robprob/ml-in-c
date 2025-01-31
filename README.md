@@ -28,6 +28,5 @@
 - Add a guide for utilizing sample generation scripts
 
 ## Future Models
-- Logistic Regression
-- GLMs
+- Tweedie Regression
 - K-Means Clustering
