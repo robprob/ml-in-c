@@ -1,5 +1,5 @@
 # Generalized Linear Models (GLMs)
-WIP implementations of various generalized linear models, including Linear, Poisson, Gamma, and Tweedie regression. Support for multiple optimization strategies and regulization techniques.
+WIP implementations of various generalized linear models, including Linear, Poisson, Gamma, and Tweedie regression. Support for multiple optimization strategies and regularization techniques.
 
 ---
 ## Features
