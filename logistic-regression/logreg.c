@@ -59,24 +59,22 @@ int main(int argc, char **argv)
     // Parse data path and model hyperparameter from config file
     parse_config(&data, &logreg);
 
-    /*
-    // Print selected parameters
-    printf("File Path: %s\n", data.file_path);
-    printf("Standardized: %i\n", data.standardized);
-    printf("Number of Epochs: %i\n", logreg.num_epochs);
-    printf("Learning Rate: %g\n", logreg.learning_rate);
-    printf("Test Proportion: %g\n", data.test_proportion);
-    printf("Validation Proportion: %g\n", data.valid_proportion);
-    printf("Early Stopping: %i\n", logreg.early_stopping);
-    printf("Batch Size: %i\n", logreg.batch_size);
-    printf("L2 alpha: %g\n", logreg.l2_alpha);
-    printf("L1 alpha: %g\n", logreg.l1_alpha);
-    printf("Elastic Net Mix Ratio: %g\n", logreg.mix_ratio);
-    printf("Tolerance: %g\n", logreg.tolerance);
-    printf("Patience %i\n", logreg.patience);
-    */
-
-
+    #ifdef VERBOSE
+        // Print selected parameters
+        printf("File Path: %s\n", data.file_path);
+        printf("Standardized: %i\n", data.standardized);
+        printf("Number of Epochs: %i\n", logreg.num_epochs);
+        printf("Learning Rate: %g\n", logreg.learning_rate);
+        printf("Test Proportion: %g\n", data.test_proportion);
+        printf("Validation Proportion: %g\n", data.valid_proportion);
+        printf("Early Stopping: %i\n", logreg.early_stopping);
+        printf("Batch Size: %i\n", logreg.batch_size);
+        printf("L2 alpha: %g\n", logreg.l2_alpha);
+        printf("L1 alpha: %g\n", logreg.l1_alpha);
+        printf("Elastic Net Mix Ratio: %g\n", logreg.mix_ratio);
+        printf("Tolerance: %g\n", logreg.tolerance);
+        printf("Patience %i\n", logreg.patience);
+    #endif
 
     // Load feature and target variable data into arrays
     load(&data);
@@ -244,7 +242,7 @@ void parse_config(struct Dataset *data, struct LogisticRegression *logreg)
     fclose(file);
 }
 
-// Initialize model paramaters at 0
+// Initialize model parameters at 0
 void initialize_model(struct LogisticRegression *logreg, int num_features)
 {
     logreg->w = calloc(num_features, sizeof(double));
@@ -364,6 +362,7 @@ void fit_model(struct LogisticRegression *logreg, struct Dataset *data)
         // Update weights and bias parameters
         for (int j = 0; j < num_features; j++)
         {
+            // Apply regularization penalty, if applicable
             double regularization = gradient_regularization(w[j], train_length, l2_alpha, l1_alpha, r);
             w[j] -= learning_rate * ((w_sums[j] / train_length) + regularization);
         }
