@@ -22,18 +22,19 @@ E = (1/2) * Σ(i=1)^n (yi - ^yi)^2
 #include "mlper.h"
 
 struct LinearRegression {
-    int num_epochs;            // Number of training iterations
-    int polynomial_degree;     // Highest polynomial degree to generate from features
-    double learning_rate;      // Training "step" size
-    int early_stopping;        // Truth value of early stopping
-    double tolerance;          // Minimum acceptable reduction in MSE
-    int patience;              // Number of "bad" MSE checks required in a row
-    int batch_size;            // Number of samples taken per epoch (leave at 0 for batch GD)
-    double l2_alpha;           // Ridge coefficient
-    double l1_alpha;           // Lasso coefficient
-    double mix_ratio;          // 0 is equivalent to pure ridge, 1 is equivalent to pure lasso
-    double *w;                 // Weight vector
-    double b;                  // Bias
+    char distribution_type[20];  // Generalized linear model distribution
+    int num_epochs;              // Number of training iterations
+    int polynomial_degree;       // Highest polynomial degree to generate from features
+    double learning_rate;        // Training "step" size
+    int early_stopping;          // Truth value of early stopping
+    double tolerance;            // Minimum acceptable reduction in MSE
+    int patience;                // Number of "bad" MSE checks required in a row
+    int batch_size;              // Number of samples taken per epoch (leave at 0 for batch GD)
+    double l2_alpha;             // Ridge coefficient
+    double l1_alpha;             // Lasso coefficient
+    double mix_ratio;            // 0 is equivalent to pure ridge, 1 is equivalent to pure lasso
+    double *w;                   // Weight vector
+    double b;                    // Bias
 };
 
 // Function Prototypes
@@ -113,10 +114,8 @@ int main(int argc, char **argv)
     // Generate predictions using trained model
     predict(&linreg, &data, data.X_test, data.test_length);
 
-    // Calculate Mean Squared Error and RMSE
-    double mse = mean_squared_error(data.y_test, data.y_pred, data.test_length);
-    printf("\nTest MSE: %f\n", mse);
-    printf("Test RMSE: %f\n", sqrt(mse));
+    // Print score/performance
+    print_model_performance(linreg.distribution_type, data.y_test, data.y_pred, data.test_length);
 
     // Calculate and print model training time
     double training_time = ((double) (train_end - train_start)) / CLOCKS_PER_SEC;
@@ -236,6 +235,8 @@ void parse_config(struct Dataset *data, struct LinearRegression *linreg)
 // Initialize model parameters at 0 (horizontal line)
 void initialize_model(struct LinearRegression *linreg, int num_features)
 {
+    strcpy(linreg->distribution_type, "gaussian");
+
     linreg->w = calloc(num_features, sizeof(double));
     if (!linreg->w)
     {
@@ -340,7 +341,7 @@ void fit_model(struct LinearRegression *linreg, struct Dataset *data)
             double dE_dw = (-2.0 / train_length) * w_sums[j];
 
             // Apply regularization gradient
-            dE_dw += gradient_regularization(w[j], train_length, l2_alpha, l1_alpha, r);
+            dE_dw += regularization_gradient(w[j], l2_alpha, l1_alpha, r);
 
             // Update feature weight, compensating for learning rate
             w[j] -= learning_rate * dE_dw;
