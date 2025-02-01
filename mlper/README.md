@@ -218,37 +218,37 @@ struct Dataset {
 - **Description**: Inverse of inverse link.
 - **Prototype**:
   ```c
-double double_inverse_link(double eta);
+  double double_inverse_link(double eta);
   ```
 ### **inverse_tweedie_link**
 - **Description**: Computes inverse Tweedie link using power parameter.
 - **Prototype**:
   ```c
-double inverse_tweedie_link(double eta, double p);
+  double inverse_tweedie_link(double eta, double p);
   ```
 ### **poisson_loss**
 - **Description**: Computes half-deviance loss of Poisson distribution.
 - **Prototype**:
   ```c
-double poisson_loss(double y_true, double y_pred);
+  double poisson_loss(double y_true, double y_pred);
   ```
 ### **gamma_loss**
 - **Description**: Computes half-deviance loss of Gamma distribution.
 - **Prototype**:
   ```c
-double gamma_loss(double y_true, double y_pred);
+  double gamma_loss(double y_true, double y_pred);
   ```
 ### **gaussian_nll**
 - **Description**: Computes negative log-likelihood for Gaussian distributions (MSE).
 - **Prototype**:
   ```c
-double gaussian_nll(double y_true, double y_pred);
+  double gaussian_nll(double y_true, double y_pred);
   ```
 ### **poisson_nll**
 - **Description**: Computes negative log-likelihood for Poisson distributions.
 - **Prototype**:
   ```c
-double poisson_nll(double y_true, double y_pred);
+  double poisson_nll(double y_true, double y_pred);
   ```
 ### **mean_squared_error**
 - **Description**: Computes the Mean Squared Error (MSE) between predicted and actual values.
@@ -290,7 +290,7 @@ double poisson_nll(double y_true, double y_pred);
 - **Description**: Computes negative log-likelihood for Poisson distributions.
 - **Prototype**:
   ```c
-double average_poisson_nll(double *y_true, double *y_pred, int num_predictions, int num_features);
+  double average_poisson_nll(double *y_true, double *y_pred, int num_predictions, int num_features);
   ```
 ### **tweedie_nll**
 - **Description**: Computes negative-log-likelihood for Tweedie distributions.
@@ -308,55 +308,55 @@ double average_poisson_nll(double *y_true, double *y_pred, int num_predictions, 
 - **Description**: Computes residual for Gaussian mean-squared-error.
 - **Prototype**:
   ```c
-double gaussian_residual(double y_true, double y_pred);
-```
+  double gaussian_residual(double y_true, double y_pred);
+  ```
 ### **poisson_residual**
 - **Description**: Computes residual for Poisson negative log-likelihood.
 - **Prototype**:
   ```c
-double poisson_residual(double y_true, double y_pred);
-```
+  double poisson_residual(double y_true, double y_pred);
+  ```
 ### **gamma_residual**
 - **Description**: Computes residual for Gamma negative log-likelihood.
 - **Prototype**:
   ```c
-double gamma_residual(double y_true, double y_pred);
-```
+  double gamma_residual(double y_true, double y_pred);
+  ```
 ### **tweedie_residual**
 - **Description**: Computes residual for Tweedie negative log-likelihood.
 - **Prototype**:
   ```c
-double tweedie_residual(double y_true, double y_pred, double p);
-```
+  double tweedie_residual(double y_true, double y_pred, double p);
+  ```
 ### **accuracy**
 - **Description**: Computes overall accuracy of discrete predictions (float in range [0.0, 1.0] inclusive).
 - **Prototype**:
   ```c
-double accuracy(double *y_true, double *y_pred, int num_predictions);
-```
+  double accuracy(double *y_true, double *y_pred, int num_predictions);
+  ```
 ### **print_model_performance**
 - **Description**: Print score/performance based on chosen model.
 - **Prototype**:
   ```c
-void print_model_performance(char *distribution_type, double *y_true, double *y_pred, int num_predictions);
-```
+  void print_model_performance(char *distribution_type, double *y_true, double *y_pred, int num_predictions);
+  ```
 ### **classification_metrics**
 - **Description**: Computes precision, recall, and f1-score.
 - **Prototype**:
   ```c
-void classification_metrics(double *y_true, double *y_pred, int num_predictions, double *precision, double *recall, double *f1_score);
-```
+  void classification_metrics(double *y_true, double *y_pred, int num_predictions, double *precision, double *recall, double *f1_score);
+  ```
 ### **gradient_regularization**
 - **Description**: Computes total regularization gradient penalty.
 - **Prototype**:
   ```c
-double regularization_gradient(double weight, double l2_alpha, double l1_alpha, double r);
+  double regularization_gradient(double weight, double l2_alpha, double l1_alpha, double r);
   ```
 ### **regularization_loss**
 - **Description**: Computes total regularization loss.
 - **Prototype**:
   ```c
-double regularization_loss(double weight, double l2_alpha, double l1_alpha, double r);
+  double regularization_loss(double weight, double l2_alpha, double l1_alpha, double r);
   ```
 
 ---
