@@ -26,6 +26,7 @@
 - Provide more detailed help for model configuration
 - Add additional pre-processing/analysis utility to MLper library
 - Add a guide for utilizing sample generation scripts
+- Add support for softmax regression
 
 ## Future Models
 - Tweedie Regression
