@@ -23,7 +23,7 @@ E = (1/2) * Σ(i=1)^n (yi - ^yi)^2
 
 struct LinearRegression {
     int num_epochs;            // Number of training iterations
-    int polynomial_degree;     // Highest polynomial degree to generate for Polynomial Regression
+    int polynomial_degree;     // Highest polynomial degree to generate from features
     double learning_rate;      // Training "step" size
     int early_stopping;        // Truth value of early stopping
     double tolerance;          // Minimum acceptable reduction in MSE
@@ -58,22 +58,22 @@ int main(int argc, char **argv)
     // Parse data path and model hyperparameter from config file
     parse_config(&data, &linreg);
 
-    /*
-    // Print selected parameters
-    printf("File Path: %s\n", data.file_path);
-    printf("Standardized: %i\n", data.standardized);
-    printf("Number of Epochs: %i\n", linreg.num_epochs);
-    printf("Learning Rate: %g\n", linreg.learning_rate);
-    printf("Test Proportion: %g\n", data.test_proportion);
-    printf("Validation Proportion: %g\n", data.valid_proportion);
-    printf("Early Stopping: %i\n", linreg.early_stopping);
-    printf("Batch Size: %i\n", linreg.batch_size);
-    printf("L2 alpha: %g\n", linreg.l2_alpha);
-    printf("L1 alpha: %g\n", linreg.l1_alpha);
-    printf("Elastic Net Mix Ratio: %g\n", linreg.mix_ratio);
-    printf("Tolerance: %g\n", linreg.tolerance);
-    printf("Patience %i\n", linreg.patience);
-    */
+    #ifdef VERBOSE
+        // Print selected parameters
+        printf("File Path: %s\n", data.file_path);
+        printf("Standardized: %i\n", data.standardized);
+        printf("Number of Epochs: %i\n", linreg.num_epochs);
+        printf("Learning Rate: %g\n", linreg.learning_rate);
+        printf("Test Proportion: %g\n", data.test_proportion);
+        printf("Validation Proportion: %g\n", data.valid_proportion);
+        printf("Early Stopping: %i\n", linreg.early_stopping);
+        printf("Batch Size: %i\n", linreg.batch_size);
+        printf("L2 alpha: %g\n", linreg.l2_alpha);
+        printf("L1 alpha: %g\n", linreg.l1_alpha);
+        printf("Elastic Net Mix Ratio: %g\n", linreg.mix_ratio);
+        printf("Tolerance: %g\n", linreg.tolerance);
+        printf("Patience %i\n", linreg.patience);
+    #endif
 
 
 
@@ -233,7 +233,7 @@ void parse_config(struct Dataset *data, struct LinearRegression *linreg)
     fclose(file);
 }
 
-// Initialize model paramaters at 0 (horizontal line)
+// Initialize model parameters at 0 (horizontal line)
 void initialize_model(struct LinearRegression *linreg, int num_features)
 {
     linreg->w = calloc(num_features, sizeof(double));
