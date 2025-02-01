@@ -1,16 +1,16 @@
 [Model Selection]
-distribution_type = tweedie
-p = 2.0
+distribution_type = gaussian
+p = 0
 
 [Dataset]
-file_path = ../sample-data/gamma_3_features_1_degree_1000_samples.csv
+file_path = ../sample-data/gaussian_5_features_1_degree_1000_samples.csv
 polynomial_degree = 1
 standardize = true
 test_proportion = 0.2
 valid_proportion = 0.1
 
 [Regularization]
-l2_alpha = 0.2
+l2_alpha = 0.1
 l1_alpha = 0.0
 mix_ratio = 0.0
 
