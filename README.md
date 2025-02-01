@@ -14,6 +14,7 @@
 ## Models
 - [Linear and Polynomial Regression](https://github.com/robprob/ml-in-c/tree/main/linear-regression)
 - [Logistic Regression](https://github.com/robprob/ml-in-c/tree/main/logistic-regression)
+- [Generalized Linear Models (GLMs)](https://github.com/robprob/ml-in-c/tree/main/general-regression)
 ## ML Helper Library
 - Algorithm-agnostic helper functions
 - [MLper](https://github.com/robprob/ml-in-c/tree/main/mlper)
@@ -29,5 +30,4 @@
 - Add support for softmax regression
 
 ## Future Models
-- Tweedie Regression
 - K-Means Clustering

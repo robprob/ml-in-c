@@ -3,6 +3,9 @@
 
 #include "dataset.h"
 
+// Random weight initialization
+void xavier_glorot_init(double *w, int num_features);
+
 // Feature transformation
 void poly_transform(struct Dataset *data, int degree);
 

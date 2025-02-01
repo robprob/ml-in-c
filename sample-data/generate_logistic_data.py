@@ -53,6 +53,7 @@ data = pd.DataFrame(X, columns=columns)
 data['y'] = y
 
 # Save to CSV
-data.to_csv(f'{num_features}_features_{class_balance}_balance_{num_samples}_samples.csv', index=False)
+output_filename = f"logistic_{num_features}_features_{class_balance}_balance_{num_samples}_samples.csv"
+data.to_csv(output_filename, index=False)
 
-print(f"Dataset saved as '{num_features}_features_{class_balance}_balance_{num_samples}_samples.csv'")
+print(f"Dataset saved as '{output_filename}'")
