@@ -1,3 +1,22 @@
+## v0.3.0 (2025-01-31)
+### Added
+- Support for **Logistic Regression**
+- Support for **Generalized Linear Models** (GLMs), including **Gaussian**, **Poisson**, **Gamma**, and **Tweedie** distributions
+- Link and inverse **link** functions to MLper metrics.c
+- Variety of **loss** functions to MLper metrics.c
+- **Linear algebra** functions to MLper metrics.c, starting with dot_prod
+- **Derivative residual** functions for each generalized model distribution
+- New **scale-independent performance metrics**, such as r_squared, added to MLper metrics.c
+- New gradient loss function, **regularization_loss**, to properly display the effects of the regularization gradient, in MLper metrics.c
+- Python scripts to **generate Poisson data, Gamma data, Tweedie data**
+- Many more new functions and utilities
+- Open source **license**
+### Changed
+- Instead of commenting the block out, programs instead checks if a VERBOSE macro has been defined to determine whether model parameters are printed
+- Various wording changes to improve clarity
+
+---
+
 ## v0.2.2 (2025-01-26)
 ### Added
 - WIP implementation of **Logistic Regression**
