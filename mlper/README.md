@@ -18,28 +18,28 @@ The library supports both **static** and **shared** compilation, with both optio
 
 ### **Dataset Struct**
   ```c
-  struct Dataset {
-      char file_path[128];     // Path to CSV file
-      int standardized;        // Standardization truth value
-      double *feature_means;   // Mean of each input feature
-      double *feature_stds;    // Standard deviation of each input feature
-      double *X;               // Feature matrix
-      double *y;               // Target array
-      double *X_train;         // Training feature set
-      double *X_valid;         // Validation feature set
-      double *X_test;          // Test feature set
-      double *y_train;         // Training targets
-      double *y_valid;         // Validation targets
-      double *y_test;          // Test targets
-      double *y_pred;          // Model Predictions
-      int num_features;        // Number of features
-      int num_entries;         // Number of entries
-      double test_proportion;  // Proportion of training data held in test set
-      double valid_proportion; // Proportion of training set split into validation set
-      int train_length;        // Number of training entries
-      int valid_length;        // Number of validation entries
-      int test_length;         // Number of test entries
-  };
+struct Dataset {
+    char file_path[128];     // Path to CSV file
+    int standardized;        // Standardization truth value
+    double *feature_means;   // Mean of each input feature
+    double *feature_stds;    // Standard deviation of each input feature
+    double *X;               // Feature matrix
+    double *y;               // Target array
+    double *X_train;         // Training feature set
+    double *X_valid;         // Validation feature set
+    double *X_test;          // Test feature set
+    double *y_train;         // Training targets
+    double *y_valid;         // Validation targets
+    double *y_test;          // Test targets
+    double *y_pred;          // Model Predictions
+    int num_features;        // Number of features
+    int num_samples;         // Number of samples
+    double test_proportion;  // Proportion of training data held in test set
+    double valid_proportion; // Proportion of training set split into validation set
+    int train_length;        // Number of training samples
+    int valid_length;        // Number of validation samples
+    int test_length;         // Number of test samples
+};
   ```
 
 ### **initialize_dataset**
@@ -112,6 +112,18 @@ The library supports both **static** and **shared** compilation, with both optio
 
 ## **preprocessing.h**
 
+### **xavier_glorot_init**
+- **Description**: Randomly initialize weights via Xavier Glorot Initialization.
+- **Prototype**:
+  ```c
+  void xavier_glorot_init(double *w, int num_features);
+  ```
+### **poly_transform**
+- **Description**: Transforms input feature matrix into polynomial feature matrix of specified maximum degree.
+- **Prototype**:
+  ```c
+  void poly_transform(struct Dataset *data, int degree);
+  ```
 ### **standardize**
 - **Description**: Standardize feature data to mean of 0, standard deviation of 1, using training data statistics.
 - **Prototype**:
@@ -125,14 +137,7 @@ The library supports both **static** and **shared** compilation, with both optio
   ```c
   void unstandardize(struct Dataset *data, double *feature_data, int num_entries);
   ```
-
-### **poly_transform**
-- **Description**: Transforms input feature matrix into polynomial feature matrix of specified maximum degree.
-- **Prototype**:
-  ```c
-  void poly_transform(struct Dataset *data, int degree);
-  ```
-
+  
 ---
 
 ## **metrics.h**
@@ -143,19 +148,215 @@ The library supports both **static** and **shared** compilation, with both optio
   ```c
   double double_pow(double base, int pow);
   ```
-
+### **log_loss**
+- **Description**: Computes log loss given true output and predicted probability.
+- **Prototype**:
+  ```c
+  double log_loss(double y_true, double y_pred);
+  ```
+### **log_likelihood**
+- **Description**: Computes log-likelihood given true output and predicted output.
+- **Prototype**:
+  ```c
+  double log_likelihood(double y_true, double y_pred);
+  ```
+### **neg_log_likelihood**
+- **Description**: Computes negative log-likelihood given true output and predicted output.
+- **Prototype**:
+  ```c
+  double neg_log_likelihood(double y_true, double y_pred);
+  ```
+### **dot_prod**
+- **Description**: Performs a dot product on specified data entry.
+- **Prototype**:
+  ```c
+  double dot_prod(double *X, int sample_index, double *w, int num_features);
+  ```
+### **identity_link**
+- **Description**: Reflexive identity link (Gaussian).
+- **Prototype**:
+  ```c
+  double identity_link(double eta);
+  ```
+### **logit_link**
+- **Description**: Logistic link (logit).
+- **Prototype**:
+  ```c
+  double logit_link(double eta);
+  ```
+### **sigmoid**
+- **Description**: Inverse logistic link.
+- **Prototype**:
+  ```c
+  double sigmoid(double eta);
+  ```
+### **log_link**
+- **Description**: Log-link.
+- **Prototype**:
+  ```c
+  double log_link(double eta);
+  ```
+### **inverse_log_link**
+- **Description**: Inverse log-link (exponential).
+- **Prototype**:
+  ```c
+  double inverse_log_link(double eta);
+  ```
+### **inverse_link**
+- **Description**: Inverse link.
+- **Prototype**:
+  ```c
+  double inverse_link(double mu);
+  ```
+### **neg_inverse_link**
+- **Description**: Negative inverse link.
+- **Prototype**:
+  ```c
+  double neg_inverse_link(double mu);
+  ```
+### **double_inverse_link**
+- **Description**: Inverse of inverse link.
+- **Prototype**:
+  ```c
+double double_inverse_link(double eta);
+  ```
+### **inverse_tweedie_link**
+- **Description**: Computes inverse Tweedie link using power parameter.
+- **Prototype**:
+  ```c
+double inverse_tweedie_link(double eta, double p);
+  ```
+### **poisson_loss**
+- **Description**: Computes half-deviance loss of Poisson distribution.
+- **Prototype**:
+  ```c
+double poisson_loss(double y_true, double y_pred);
+  ```
+### **gamma_loss**
+- **Description**: Computes half-deviance loss of Gamma distribution.
+- **Prototype**:
+  ```c
+double gamma_loss(double y_true, double y_pred);
+  ```
+### **gaussian_nll**
+- **Description**: Computes negative log-likelihood for Gaussian distributions (MSE).
+- **Prototype**:
+  ```c
+double gaussian_nll(double y_true, double y_pred);
+  ```
+### **poisson_nll**
+- **Description**: Computes negative log-likelihood for Poisson distributions.
+- **Prototype**:
+  ```c
+double poisson_nll(double y_true, double y_pred);
+  ```
 ### **mean_squared_error**
 - **Description**: Computes the Mean Squared Error (MSE) between predicted and actual values.
 - **Prototype**:
   ```c
   double mean_squared_error(double *y_actual, double *y_pred, int num_predictions);
   ```
-
+### **r_squared**
+- **Description**: Computes R^2, a scale-independent performance metric, between predicted and actual values.
+- **Prototype**:
+  ```c
+  double r_squared(double *y_true, double *y_pred, int num_predictions);
+  ```
+### **poisson_deviance**
+- **Description**: Computes Poisson deviance between predicted and actual values.
+- **Prototype**:
+  ```c
+  double poisson_deviance(double *y_true, double *y_pred, int num_predictions);
+  ```
+### **deviance_r2**
+- **Description**: Computes deviance R^2 between predicted and actual values.
+- **Prototype**:
+  ```c
+  double deviance_r2(double *y_true, double *y_pred, int num_predictions);
+  ```
+### **average_log_loss**
+- **Description**: Computes average log loss from actual output and predicted probabilities.
+- **Prototype**:
+  ```c
+  double average_log_loss(double *y_true, double *y_pred, int num_predictions);
+  ```
+### **average_log_likelihood**
+- **Description**: Computes average log-likelihood from actual output and predicted output.
+- **Prototype**:
+  ```c
+  double average_log_likelihood(double *y_true, double *y_pred, int num_predictions);
+  ```
+### **average_poisson_nll**
+- **Description**: Computes negative log-likelihood for Poisson distributions.
+- **Prototype**:
+  ```c
+double average_poisson_nll(double *y_true, double *y_pred, int num_predictions, int num_features);
+  ```
+### **tweedie_nll**
+- **Description**: Computes negative-log-likelihood for Tweedie distributions.
+- **Prototype**:
+  ```c
+  double tweedie_nll(double y_true, double y_pred, double p);
+  ```
+### **average_gamma_loss**
+- **Description**: Computes average Gamma loss from actual output and predicted output.
+- **Prototype**:
+  ```c
+  double average_gamma_loss(double *y_true, double *y_pred, int num_predictions);
+  ```
+### **gaussian_residual**
+- **Description**: Computes residual for Gaussian mean-squared-error.
+- **Prototype**:
+  ```c
+double gaussian_residual(double y_true, double y_pred);
+```
+### **poisson_residual**
+- **Description**: Computes residual for Poisson negative log-likelihood.
+- **Prototype**:
+  ```c
+double poisson_residual(double y_true, double y_pred);
+```
+### **gamma_residual**
+- **Description**: Computes residual for Gamma negative log-likelihood.
+- **Prototype**:
+  ```c
+double gamma_residual(double y_true, double y_pred);
+```
+### **tweedie_residual**
+- **Description**: Computes residual for Tweedie negative log-likelihood.
+- **Prototype**:
+  ```c
+double tweedie_residual(double y_true, double y_pred, double p);
+```
+### **accuracy**
+- **Description**: Computes overall accuracy of discrete predictions (float in range [0.0, 1.0] inclusive).
+- **Prototype**:
+  ```c
+double accuracy(double *y_true, double *y_pred, int num_predictions);
+```
+### **print_model_performance**
+- **Description**: Print score/performance based on chosen model.
+- **Prototype**:
+  ```c
+void print_model_performance(char *distribution_type, double *y_true, double *y_pred, int num_predictions);
+```
+### **classification_metrics**
+- **Description**: Computes precision, recall, and f1-score.
+- **Prototype**:
+  ```c
+void classification_metrics(double *y_true, double *y_pred, int num_predictions, double *precision, double *recall, double *f1_score);
+```
 ### **gradient_regularization**
 - **Description**: Computes total regularization gradient penalty.
 - **Prototype**:
   ```c
-  double gradient_regularization(double weight, int train_length, double l2_alpha, double l1_alpha, double r);
+double regularization_gradient(double weight, double l2_alpha, double l1_alpha, double r);
+  ```
+### **regularization_loss**
+- **Description**: Computes total regularization loss.
+- **Prototype**:
+  ```c
+double regularization_loss(double weight, double l2_alpha, double l1_alpha, double r);
   ```
 
 ---
