@@ -4,7 +4,7 @@ import sys
 
 # Read command-line arguments
 if len(sys.argv) < 4:
-    print("Usage: python generate_gaussian.py <num_features> <max_degree> <num_samples> [<noise_std>]")
+    print("Usage: python generate_gaussian_data.py <num_features> <max_degree> <num_samples> [<noise_std>]")
     sys.exit(1)
 
 num_features = int(sys.argv[1])
