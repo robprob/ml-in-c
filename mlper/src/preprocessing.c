@@ -5,6 +5,16 @@
 #include "dataset.h"
 #include "metrics.h"
 
+// Randomly initialize weights via Xavier/Glorot Initialization
+void xavier_glorot_init(double *w, int num_features)
+{
+    double max = 1.0 / sqrt(num_features);
+    for (int j = 0; j < num_features; j++)
+    {
+        // Assign a random number between 0 and max
+        w[j] = ((double) rand() / RAND_MAX) * max;
+    }
+}
 
 // Transforms input feature matrix into polynomial feature matrix of specified maximum degree
 void poly_transform(struct Dataset *data, int degree)
