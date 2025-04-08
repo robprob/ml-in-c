@@ -33,7 +33,7 @@ scaler = StandardScaler().fit(X_train)
 X_train = scaler.transform(X_train)
 X_test = scaler.transform(X_test)
 
-# Instantiate a new linear regression model
+# Instantiate a new logistic regression model
 logreg = LogisticRegression(penalty='l2', verbose=1)
 
 # Time model fitting
